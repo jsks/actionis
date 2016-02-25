@@ -10,8 +10,8 @@ function add(data, time, tail) {
     const [start, stop] = parseRange(time, range),
         entry = tail.slice(0, rangeIndex) + tail.slice(range.length + 1)
 
-    data.add(time, { start: `${start.getHours()}.${start.getMinutes()}`,
-                     stop: `${stop.getHours()}.${stop.getMinutes()}`,
+    data.add(time, { start: `${pad(start.getHours())}.${pad(start.getMinutes())}`,
+                     stop: `${pad(stop.getHours())}.${pad(stop.getMinutes())}`,
                      duration: stop - start, 
                      timestamp: Date.now(), 
                      activity: entry })
@@ -37,8 +37,12 @@ function parseRange(time, str) {
     return str.replace(/\s*/g, '').split('-').map(n => {
         const d = new Date(time),
             [hours, mins] = n.split('.')
-        d.setHours(hours, mins, 0, 0)
+        d.setHours(hours, mins || 0, 0, 0)
 
         return d
     })
+}
+
+function pad(n) {
+    return (n < 10 ? '0' : '') + n
 }
