@@ -1,8 +1,7 @@
 #!/bin/zsh
 
 mkdir lib 2>/dev/null
-[[ ${(L)1} == "all" ]] && rm lib/*(N).js
-
+[[ ${(L)1} == "all" ]] && rm lib/*.js(N)
 for i in src/*.js; do
     out_file="lib/${i:t}"
     if [[ ! -f $out_file || $i -nt $out_file ]]; then
