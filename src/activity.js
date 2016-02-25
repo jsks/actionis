@@ -22,7 +22,7 @@ module.exports = function(data) {
     }
 
     function print(time) {
-       if (data[time]) {
+       if (data[time] && data[time].length > 0) {
            console.log('   time\t\tduration\tactivity')
            data[time].forEach((n, i) => {
                console.log(`${++i}) ${n.start}-${n.stop}\t${(n.duration / (1000 * 60 * 60)).toFixed(2)} hrs\t${n.activity}`)
