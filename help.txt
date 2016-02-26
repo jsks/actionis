@@ -1,0 +1,28 @@
+Actionis: cli activity log
+
+Usage: actionis [CMD] @[WHEN] [<time> <activity>|<index>]
+    Specific a command followed by an optional date (default: today) prefixed
+    with an @ with either a time range and activity or an index related to the
+    list of currently saved activities.
+    
+CMDS
+    add: Add an activity to the log for a specificied date.
+        - Indicate a time range (ex. 10.40-12.32) and an activity (ex.
+          "Running")
+    rm: Remove an activity from the log.
+        - Remove by index
+    print: Output list of activities for a given date.
+
+Note: if no command is given, actionis defaults to `add`
+    
+WHEN
+    Each command accepts an optional specificed date, otherwise the default is
+    the current date. `Month/day` is accepted as well as the strings 'today'
+    and 'yesterday'
+
+Examples
+
+    $ actionis add @yesterday 13.10-14.23 Watch TV
+    $ actionis 15.23-17.56 Run away from wolves
+    $ actionis rm @8/3 2
+    $ actionis print

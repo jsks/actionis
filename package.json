@@ -1,0 +1,19 @@
+{
+  "name": "actionis",
+  "version": "0.0.1",
+  "description": "cli activity log",
+  "main": "lib/actionis.js",
+  "bin": {
+    "actionis": "./bin/cli.js"
+  },
+  "dependencies": {
+    "babel-preset-es2015": "^6.5.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jsks/actionis.git"
+  },
+  "author": "jsks",
+  "license": "MIT"
+}

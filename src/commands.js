@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = { add, rm, print }
+module.exports = { add, help, rm, print }
 
 function add(data, time, tail) {
     const [range, rangeIndex] = findRange(tail)
@@ -15,6 +15,10 @@ function add(data, time, tail) {
                      duration: stop - start, 
                      timestamp: Date.now(), 
                      activity: entry })
+}
+
+function help() {
+    console.log(require('fs').readFileSync("./help.txt", "utf-8"))
 }
 
 function rm(data, time, index) {

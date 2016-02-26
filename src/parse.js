@@ -1,6 +1,6 @@
 'use strict'
 
-const cmds = ['add', 'rm', 'print']
+const cmds = ['add', 'help', 'rm', 'print']
 
 module.exports = function(args) {
     const cmd = (cmds.indexOf(args[0]) > -1) ? args[0] : '' 
