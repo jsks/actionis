@@ -3,7 +3,8 @@
 const parse = require('../lib/parse.js'),
     cmds = ['add', 'rm', 'print']
 
-const d = new Date()
+const d = new Date(),
+    year = d.getFullYear()
 d.setHours(0, 0, 0, 0)
 const today = d.getTime()
 
@@ -69,3 +70,21 @@ describe('Parsing w/o command when', function() {
             { cmd: 'add', time: today, tail: '' })
     })
 })
+
+describe('Parsing time when', function() {
+    it('numeric month/day', function() {
+        expect(parse('@8/4 10.42 - 19.23 immense'.split(' '))).toEqual(
+            { cmd: 'add', time: new Date(`${year}/8/4`).getTime(), tail: '10.42 - 19.23 immense' })
+    })
+
+    it('numeric year/month/day', function() {
+        expect(parse('@2014/5/2 nope'.split(' '))).toEqual(
+            { cmd: 'add', time: new Date('2014/5/2').getTime(), tail: 'nope' })
+    })
+
+    it('no @', function() {
+        expect(parse('rm yesterday'.split(' '))).toEqual(
+            { cmd: 'rm', time: today, tail: 'yesterday' })
+    })
+})
+
