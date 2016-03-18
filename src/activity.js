@@ -29,26 +29,6 @@ module.exports = function(data) {
             delete data[time]
     }
 
-    function print(time) {
-        function fmtTime(d) {
-            return `${d.getHours()}.${d.getMinutes()}`
-        }
-
-        if (data[time] && data[time].length > 0) {
-            const date = new Date(Number(time)),
-                  opts = { weekday: "long", day: "numeric", month: "short", year: "numeric" }
-            console.log(date.toLocaleDateString("sv-SE", opts))
-
-            data[time].forEach((n, i) => {
-                const d = (n.duration / (1000 * 60 * 60)).toFixed(2),
-                      start = fmtTime(new Date(n.start)),
-                      stop = fmtTime(new Date(n.stop))
-
-                console.log(`    (${i+1}) ${start}-${stop} => ${d} hrs   ${n.activity} [${(n.tags) ? n.tags.join(' ') : ''}]`)
-            })
-        }
-    }
-
     return {
         add,
         rm,
