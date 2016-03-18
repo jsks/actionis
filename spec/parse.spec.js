@@ -1,90 +1,85 @@
 'use strict'
 
 const parse = require('../lib/parse.js'),
-    cmds = ['add', 'rm', 'print']
+      utils = require('./utils.js')
 
-const d = new Date(),
-    year = d.getFullYear()
-d.setHours(0, 0, 0, 0)
-const today = d.getTime()
+const today = utils.date().getTime()
 
-d.setDate(d.getDate() - 1)
-const yesterday = d.getTime()
+describe('Check parsing date:', function() {
+    it('today', function() {
+        const out = [today, ['Run', 'away']]
+        expect(parse.parseDate(['@today', 'Run', 'away'])).toEqual(out)
+    })
 
+    it('yesterday', function() {
+        const d = utils.date()
+        d.setDate(d.getDate() - 1)
+        const yesterday = d.getTime(),
+              out = [yesterday, []]
+        expect(parse.parseDate(['@yesterday'])).toEqual(out)
+    })
 
-cmds.forEach(function(cmd) {
-    describe(`Parsing command (${cmd}) with`, function() {
-        it ('time', function() {
-            expect(parse(`${cmd} @yesterday`.split(' '))).toEqual(
-                { cmd: `${cmd}`, time: yesterday, tail: '' })
-        })
+    it('8/10', function() {
+        const d = utils.date('8/10')
+        d.setYear(2016)
 
-        it('time & tail', function() {
-            expect(parse(`${cmd} @yesterday 2hrs Run wolves`.split(' '))).toEqual(
-                { cmd: `${cmd}`, time: yesterday, tail: '2hrs Run wolves'})
-        })
+        const out = [d.getTime(), ['Watch', 'tv']]
+        expect(parse.parseDate(['@8/10', 'Watch', 'tv'])).toEqual(out)
+    })
 
-        it('tail', function() {
-            expect(parse(`${cmd} watch tv`.split(' '))).toEqual(
-                { cmd: `${cmd}`, time: today, tail: 'watch tv' })
-        })
+    it('empty', function() {
+        const out = [today, ['Developed', 'world']]
+        expect(parse.parseDate(['Developed', 'world'])).toEqual(out)
+    })
 
+    it('invalid', function() {
+        expect(function() {
+            parse.parseDate(['@99/99', '90', 'minutes'])
+        }).toThrow('Invalid date')
     })
 })
 
-describe('Parsing w/ wrong command when', function() {
-    it('time', function() {
-        expect(parse('what @yesterday'.split(' '))).toEqual(
-            { cmd: 'add', time: yesterday, tail: 'what' })
+describe('Check parsing range:', function() {
+    it('no space b/w times', function() {
+        const out = [utils.date().setHours(10), utils.date().setHours(13), 'run away']
+        expect(parse.parseRange(today, '10-13 run away')).toEqual(out)
     })
 
-    it('time & tail', function() {
-        expect(parse('what @yesterday what'.split(' '))).toEqual(
-            { cmd: 'add', time: yesterday, tail: 'what what' })
+    it('space b/w times', function() {
+        const out = [utils.date().setHours(11, 39), utils.date().setHours(14, 23), '']
+        expect(parse.parseRange(today, '11.39 - 14.23')).toEqual(out)
     })
 
-    it('tail', function() {
-        expect(parse('what no time'.split(' '))).toEqual(
-            { cmd: 'add', time: today, tail: 'what no time' })
-    })
-})
-
-describe('Parsing w/o command when', function() {
-    it('time', function() {
-        expect(parse('@yesterday'.split(' '))).toEqual(
-            { cmd: 'add', time: yesterday, tail: '' })
+    it('parse dates with single digits', function() {
+        const out = [utils.date().setHours(8), utils.date().setHours(12), '']
+        expect(parse.parseRange(today, '8.00-12.00')).toEqual(out)
     })
 
-    it('time & tail', function() {
-        expect(parse('@yesterday running'.split(' '))).toEqual(
-            { cmd: 'add', time: yesterday, tail: 'running' })
-    })
-
-    it('tail', function() {
-        expect(parse('running'.split(' '))).toEqual(
-            { cmd: 'add', time: today, tail: 'running' })
-    })
-
-    it('nothing', function() {
-        expect(parse([])).toEqual(
-            { cmd: 'add', time: today, tail: '' })
+    it('invalid', function() {
+        expect(function() {
+            parse.parseRange(today, '')
+        }).toThrow('Invalid range')
     })
 })
 
-describe('Parsing time when', function() {
-    it('numeric month/day', function() {
-        expect(parse('@8/4 10.42 - 19.23 immense'.split(' '))).toEqual(
-            { cmd: 'add', time: new Date(`${year}/8/4`).getTime(), tail: '10.42 - 19.23 immense' })
+describe('Check parsing tags:', function() {
+    it('proper', function() {
+        const out = [['+programming', '+tv'], ['run', 'with', 'wolves']]
+        expect(parse.parseTags(['+programming', '+tv', 'run', 'with', 'wolves'])).toEqual(out)
     })
 
-    it('numeric year/month/day', function() {
-        expect(parse('@2014/5/2 nope'.split(' '))).toEqual(
-            { cmd: 'add', time: new Date('2014/5/2').getTime(), tail: 'nope' })
-    })
-
-    it('no @', function() {
-        expect(parse('rm yesterday'.split(' '))).toEqual(
-            { cmd: 'rm', time: today, tail: 'yesterday' })
+    it('missing', function() {
+        expect(parse.parseTags(['watch', 'tv'])).toEqual([[], ['watch', 'tv']])
     })
 })
 
+describe('Check parsing time:', function() {
+    it('proper', function() {
+        const time = utils.date().setHours(10, 13, 0, 0)
+        expect(parse.parseTime(['10.13', 'program'])).toEqual([time, ['program']])
+    })
+
+    it('missing', function() {
+        expect(parse.parseTime(['watch', 'tv'])).toEqual([today,['watch', 'tv']])
+    })
+})
