@@ -1,50 +1,106 @@
 'use strict'
 
-module.exports = { add, help, rm, print }
+const parse = require('./parse.js')
 
-function add(data, time, tail) {
-    const [range, rangeIndex] = findRange(tail)
-    if (rangeIndex == -1)
-        throw 'Error'
+// summarise, ids, tags, edit
+module.exports = { add, dates, help, print, queue, rm }
 
-    const [start, stop] = parseRange(time, range),
-        entry = tail.slice(0, rangeIndex) + tail.slice(range.length + 1)
+function add(log, argArr) {
+    const [tags, arr] = parse.parseTags(argArr),
+          [date, tail] = parse.parseDate(arr),
+          [start, stop, entry] = parse.parseRange(date, tail.join(' '))
 
-    data.add(time, { start: `${pad(start.getHours())}.${pad(start.getMinutes())}`,
-                     stop: `${pad(stop.getHours())}.${pad(stop.getMinutes())}`,
-                     duration: stop - start, 
-                     timestamp: Date.now(), 
-                     activity: entry })
+    log.add(date, { start,
+                    stop,
+                    duration: stop - start,
+                    activity: entry,
+                    tags })
+
+    return log.data
 }
 
 function help() {
-    console.log(require('fs').readFileSync("./help.txt", "utf-8"))
+    console.log(require('fs').readFileSync(`${__dirname}/../help.txt`, 'utf-8'))
 }
 
-function rm(data, time, index) {
+function dates(log) {
+    console.log(Object.keys(log.data)
+                .filter(n => n != 'queue')
+                .map(n => {
+                    const d = new Date(Number(n)),
+                        fmt = { day: "numeric", year: "numeric", month: "short" }
+                    return d.toLocaleString("latn", fmt)
+                })
+                .join('\n'))
+}
+
+function queue(log, argArr) {
+    const subcmd = (argArr.length > 0) ? argArr[0].toLowerCase() : undefined
+
+    if (!subcmd) {
+        if (log.data.queue)
+            log.data.queue.forEach((n, i) => {
+                const start = new Date(n.start),
+                      since = msToHrs(Date.now() - start.getTime()),
+                      t = fmtTime(start)
+                console.log(`(${i+1}) From ${t} => ${since}hrs elapsed: ${n.activity} [${n.tags}]`)
+            })
+    } else if (subcmd == 'pop') {
+        const stop = Date.now(),
+              { start, activity, tags } = log.pop()
+
+        log.add(new Date().setHours(0, 0, 0, 0), { start,
+                                                   stop: stop,
+                                                   duration: stop - start,
+                                                   activity,
+                                                   tags })
+    } else if (subcmd == "clear") {
+        log.data.queue.forEach((_, i) => log.rm('queue', i))
+    } else {
+        const [tags, arr] = parse.parseTags(argArr),
+            [time, entry] = parse.parseTime(arr)
+
+        log.add('queue', { start: time,
+                           activity: entry.join(' '),
+                           tags })
+    }
+
+    return log.data
+}
+
+function rm(log, argArr) {
+    const [date, index] = parse.parseDate(argArr)
     if (isNaN(index))
         throw 'Not a number'
 
-    data.rm(time, index)
+    log.rm(date, index)
+    return log.data
 }
 
-function print(data, time) {
-    data.print(time)
+function print(log, argArr) {
+    const [time, _] = parse.parseDate(argArr)
+
+    if (log.data[time] && log.data[time].length > 0) {
+        const date = new Date(Number(time)),
+                opts = { weekday: "long", day: "numeric", month: "short", year: "numeric" }
+        console.log(date.toLocaleDateString("sv-SE", opts))
+
+        log.data[time].forEach((n, i) => {
+            const d = msToHrs(n.duration),
+                    start = fmtTime(new Date(n.start)),
+                    stop = fmtTime(new Date(n.stop))
+
+            console.log(`    (${i+1}) ${start}-${stop} => ${d} hrs   ${n.activity} [${(n.tags) ? n.tags.join(' ') : ''}]`)
+        })
+    }
 }
 
-function findRange(str) {
-    const r = str.match(/\d{2}(.\d{2})?\s*-\s*\d{2}(.\d{2})?/)
-    return (r) ? [r[0], r.index] : ["", -1]
+function fmtTime(d) {
+    return `${pad(d.getHours())}.${pad(d.getMinutes())}`
 }
 
-function parseRange(time, str) {
-    return str.replace(/\s*/g, '').split('-').map(n => {
-        const d = new Date(time),
-            [hours, mins] = n.split('.')
-        d.setHours(hours, mins || 0, 0, 0)
-
-        return d
-    })
+function msToHrs(n) {
+    return (n / ( 1000 * 60 * 60)).toFixed(2)
 }
 
 function pad(n) {

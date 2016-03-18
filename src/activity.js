@@ -16,26 +16,43 @@ module.exports = function(data) {
         })
     }
 
+    function pop() {
+        if (data.queue)
+            return data.queue.pop()
+    }
+
     function rm(time, index) {
         if (data[time])
             data[time].splice(index - 1, 1)
+
+        if (data[time].length == 0)
+            delete data[time]
     }
 
     function print(time) {
-       if (data[time] && data[time].length > 0) {
-           console.log('   time\t\tduration\tactivity')
-           data[time].forEach((n, i) => {
-               const d = (n.duration / (1000 * 60 * 60)).toFixed(2)
-               console.log(`${++i}) ${n.start}-${n.stop}\t${d} hrs\t${n.activity}`)
+        function fmtTime(d) {
+            return `${d.getHours()}.${d.getMinutes()}`
+        }
+
+        if (data[time] && data[time].length > 0) {
+            const date = new Date(Number(time)),
+                  opts = { weekday: "long", day: "numeric", month: "short", year: "numeric" }
+            console.log(date.toLocaleDateString("sv-SE", opts))
+
+            data[time].forEach((n, i) => {
+                const d = (n.duration / (1000 * 60 * 60)).toFixed(2),
+                      start = fmtTime(new Date(n.start)),
+                      stop = fmtTime(new Date(n.stop))
+
+                console.log(`    (${i+1}) ${start}-${stop} => ${d} hrs   ${n.activity} [${(n.tags) ? n.tags.join(' ') : ''}]`)
             })
         }
     }
 
-    return { add, 
-             rm, 
-             print, 
-             get data() { 
-                 return JSON.stringify(data) 
-             }
+    return {
+        add,
+        rm,
+        pop,
+        data
     }
 }
