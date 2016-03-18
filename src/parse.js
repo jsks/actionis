@@ -60,12 +60,12 @@ function parseRange(date, argStr) {
 }
 
 function parseTags(argArr) {
-    return [ argArr.filter(n => n.charAt(0) == '+'),
+    return [ argArr.filter(n => n.charAt(0) == '+').map(n => n.toLowerCase()),
              argArr.filter(n => n.charAt(0) != '+') ]
 }
 
 function parseTime(argArr) {
-    const date = today(),
+    const date = new Date(),
         r = argArr.findIndex(n => /\d{1,2}(.\d{1,2})?/.test(n))
 
     if (r > -1) {

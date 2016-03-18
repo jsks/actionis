@@ -1,8 +1,9 @@
 'use strict'
 
-const parse = require('./parse.js')
+const parse = require('./parse.js'),
+      chalk = require('chalk')
 
-// summarise, ids, tags, edit
+// summarise, tags, edit
 module.exports = { add, dates, help, print, queue, rm }
 
 function add(log, argArr) {
@@ -26,10 +27,11 @@ function help() {
 function dates(log) {
     console.log(Object.keys(log.data)
                 .filter(n => n != 'queue')
+                .sort()
                 .map(n => {
                     const d = new Date(Number(n)),
-                        fmt = { day: "numeric", year: "numeric", month: "short" }
-                    return d.toLocaleString("latn", fmt)
+                          fmt = { day: 'numeric', year: 'numeric', month: 'short' }
+                    return d.toLocaleString('sv-SE', fmt)
                 })
                 .join('\n'))
 }
@@ -42,8 +44,14 @@ function queue(log, argArr) {
             log.data.queue.forEach((n, i) => {
                 const start = new Date(n.start),
                       since = msToHrs(Date.now() - start.getTime()),
-                      t = fmtTime(start)
-                console.log(`(${i+1}) From ${t} => ${since}hrs elapsed: ${n.activity} [${n.tags}]`)
+                      t = fmtTime(start),
+                      tags = (n.tags) ? n.tags.join(' ') : ''
+
+                const s1 = `${chalk.blue(`(${i+1})`)} ${chalk.white(`From ${t} =>`)}`,
+                      s2 = `${chalk.red(`${since}hrs`)} ${chalk.white(`elapsed`)} ::`,
+                      s3 = `${chalk.yellow.italic(n.activity)} [${chalk.cyan(tags)}]`
+
+                console.log(`${s1} ${s2} ${s3}`)
             })
     } else if (subcmd == 'pop') {
         const stop = Date.now(),
@@ -54,11 +62,11 @@ function queue(log, argArr) {
                                                    duration: stop - start,
                                                    activity,
                                                    tags })
-    } else if (subcmd == "clear") {
+    } else if (subcmd == 'clear') {
         log.data.queue.forEach((_, i) => log.rm('queue', i))
     } else {
         const [tags, arr] = parse.parseTags(argArr),
-            [time, entry] = parse.parseTime(arr)
+              [time, entry] = parse.parseTime(arr)
 
         log.add('queue', { start: time,
                            activity: entry.join(' '),
@@ -71,7 +79,7 @@ function queue(log, argArr) {
 function rm(log, argArr) {
     const [date, index] = parse.parseDate(argArr)
     if (isNaN(index))
-        throw 'Not a number'
+        throw 'Invalid index'
 
     log.rm(date, index)
     return log.data
@@ -82,15 +90,20 @@ function print(log, argArr) {
 
     if (log.data[time] && log.data[time].length > 0) {
         const date = new Date(Number(time)),
-                opts = { weekday: "long", day: "numeric", month: "short", year: "numeric" }
-        console.log(date.toLocaleDateString("sv-SE", opts))
+              opts = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }
+        console.log(chalk.green.bold(date.toLocaleDateString('sv-SE', opts)))
 
         log.data[time].forEach((n, i) => {
             const d = msToHrs(n.duration),
-                    start = fmtTime(new Date(n.start)),
-                    stop = fmtTime(new Date(n.stop))
+                  start = fmtTime(new Date(n.start)),
+                  stop = fmtTime(new Date(n.stop)),
+                  tags = (n.tags) ? n.tags.join(' ') : ''
 
-            console.log(`    (${i+1}) ${start}-${stop} => ${d} hrs   ${n.activity} [${(n.tags) ? n.tags.join(' ') : ''}]`)
+            const s1 = `    ${chalk.blue(`(${i+1})`)} ${chalk.white(`${start}-${stop} =>`)}`,
+                  s2 = `${chalk.red(`${d} hrs`)} ::`,
+                  s3 = `${chalk.yellow.italic(n.activity)} [${chalk.cyan(tags)}]`
+
+            console.log(`${s1} ${s2} ${s3}`)
         })
     }
 }

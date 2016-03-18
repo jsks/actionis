@@ -80,6 +80,6 @@ describe('Check parsing time:', function() {
     })
 
     it('missing', function() {
-        expect(parse.parseTime(['watch', 'tv'])).toEqual([today,['watch', 'tv']])
+        expect(parse.parseTime(['watch', 'tv'])).toEqual([Date.now(), ['watch', 'tv']])
     })
 })
