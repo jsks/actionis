@@ -1,10 +1,10 @@
 'use strict'
 
 const parse = require('./parse.js'),
-      chalk = require('chalk')
+      fmt = require('./fmt.js')
 
-// summarise, tags, edit
-module.exports = { add, dates, help, print, queue, rm }
+// TODO: tags, edit
+module.exports = { add, dates, help, print, queue, rm, summarise }
 
 function add(log, argArr) {
     const [tags, arr] = parse.parseTags(argArr),
@@ -28,11 +28,9 @@ function dates(log) {
     console.log(Object.keys(log.data)
                 .filter(n => n != 'queue')
                 .sort()
-                .map(n => {
-                    const d = new Date(Number(n)),
-                          fmt = { day: 'numeric', year: 'numeric', month: 'short' }
-                    return d.toLocaleString('sv-SE', fmt)
-                })
+                .map(n => fmt.date(Number(n), { day: 'numeric',
+                                                year: 'numeric',
+                                                month: 'short'}))
                 .join('\n'))
 }
 
@@ -41,18 +39,7 @@ function queue(log, argArr) {
 
     if (!subcmd) {
         if (log.data.queue)
-            log.data.queue.forEach((n, i) => {
-                const start = new Date(n.start),
-                      since = msToHrs(Date.now() - start.getTime()),
-                      t = fmtTime(start),
-                      tags = (n.tags) ? n.tags.join(' ') : ''
-
-                const s1 = `${chalk.blue(`(${i+1})`)} ${chalk.white(`From ${t} =>`)}`,
-                      s2 = `${chalk.red(`${since}hrs`)} ${chalk.white(`elapsed`)} ::`,
-                      s3 = `${chalk.yellow.italic(n.activity)} [${chalk.cyan(tags)}]`
-
-                console.log(`${s1} ${s2} ${s3}`)
-            })
+            log.data.queue.forEach((n, i) => console.log(fmt.entry(n, i)))
     } else if (subcmd == 'pop') {
         const stop = Date.now(),
               { start, activity, tags } = log.pop()
@@ -85,37 +72,30 @@ function rm(log, argArr) {
     return log.data
 }
 
+// TODO: date range
 function print(log, argArr) {
     const [time, _] = parse.parseDate(argArr)
 
     if (log.data[time] && log.data[time].length > 0) {
-        const date = new Date(Number(time)),
-              opts = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }
-        console.log(chalk.green.bold(date.toLocaleDateString('sv-SE', opts)))
-
-        log.data[time].forEach((n, i) => {
-            const d = msToHrs(n.duration),
-                  start = fmtTime(new Date(n.start)),
-                  stop = fmtTime(new Date(n.stop)),
-                  tags = (n.tags) ? n.tags.join(' ') : ''
-
-            const s1 = `    ${chalk.blue(`(${i+1})`)} ${chalk.white(`${start}-${stop} =>`)}`,
-                  s2 = `${chalk.red(`${d} hrs`)} ::`,
-                  s3 = `${chalk.yellow.italic(n.activity)} [${chalk.cyan(tags)}]`
-
-            console.log(`${s1} ${s2} ${s3}`)
-        })
+        const opts = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }
+        console.log(fmt.date(Number(time), opts))
+        log.data[time].forEach((n, i) => console.log(`    ${fmt.entry(n, i)}`))
     }
 }
 
-function fmtTime(d) {
-    return `${pad(d.getHours())}.${pad(d.getMinutes())}`
-}
+// TODO: Add tags summary & date range
+function summarise(log) {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
 
-function msToHrs(n) {
-    return (n / ( 1000 * 60 * 60)).toFixed(2)
-}
+    const entries = new Array(7).fill(0)
+                                .map((_, i) => `${today.setHours(-24 * i)}`)
+                                .filter(n => Object.keys(log.data).indexOf(n) > -1)
+                                .map(n => log.data[n])
+                                .reduce((m, n) => m.concat(n))
 
-function pad(n) {
-    return (n < 10 ? '0' : '') + n
+    entries.sort((a, b) => a.duration < b.duration)
+           .slice(0, 5)
+           .forEach((n, i) =>
+               console.log(`${fmt.date(n.start, { weekday: 'long' })}\t${fmt.entry(n, i)}`))
 }
