@@ -1,36 +1,46 @@
 'use strict'
 
-const chalk = require('chalk')
+const { msToHrs, padNum } = require('./utils.js')
 
-module.exports = { date, entry }
+module.exports = function(colors) {
+    function entry({ start = Date.now(), stop = Date.now(), duration = stop - start, activity, tags } = {}, i) {
+        const e = [
+            ((i > -1) ? colors.index(`${i+1}`)  : ''),
+            timeRange(start, stop),
+            elapsed(duration),
+            '::',
+            colors.action(activity),
+            `[ ${tag(tags)} ]`
+        ].join(' ')
 
-function entry({ start = Date.now(), stop = Date.now(), duration = stop - start, activity, tags } = {}, i) {
-    const d = msToHrs(duration),
-          fmtStart = fmtTime(new Date(start)),
-          fmtStop = fmtTime(new Date(stop)),
-          tagStr = (tags) ? tags.join(' ') : ''
+        return colors.fill(e)
+    }
 
-    const s1 = `${chalk.white(`${fmtStart}-${fmtStop} =>`)}`,
-          s2 = `${chalk.red(`${d} hrs`)} ::`,
-          s3 = `${chalk.yellow.italic(activity)} [${chalk.cyan(tagStr)}]`,
-          prefix = (i > -1) ? chalk.blue(`${i+1} `) : ''
+    function date(d, opts) {
+        return colors.date(new Date(d).toLocaleDateString('sv-SE', opts))
+    }
 
-    return `${prefix}${s1} ${s2} ${s3}`
-}
+    function elapsed(d) {
+        return colors.duration(`${msToHrs(d)} hrs`)
+    }
 
-function date(d, opts) {
-    const date = new Date(d)
-    return chalk.green.bold(date.toLocaleDateString('sv-SE', opts))
-}
+    function time(d) {
+        return `${padNum(d.getHours())}.${padNum(d.getMinutes())}`
+    }
 
-function fmtTime(d) {
-    return `${pad(d.getHours())}.${pad(d.getMinutes())}`
-}
+    function timeRange(start, stop) {
+        return colors.timeRange(`${time(new Date(start))}-${time(new Date(stop))} =>`)
+    }
 
-function msToHrs(n) {
-    return (n / (1000 * 60 * 60)).toFixed(2)
-}
+    function tag(t) {
+        return (t) ? `${colors.tag(t.sort().join(' '))}` : ''
+    }
 
-function pad(n) {
-    return (n < 10 ? '0' : '') + n
+    return {
+        entry,
+        elapsed,
+        date,
+        timeRange,
+        tag
+    }
 }

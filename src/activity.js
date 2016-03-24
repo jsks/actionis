@@ -29,10 +29,20 @@ module.exports = function(data) {
             delete data[time]
     }
 
+    function tags(time) {
+        const t = Object.keys(data).map(k => data[k].map(n => n.tags))
+        return flatten(t).filter((n, i, a) => a.indexOf(n) == i)
+    }
+
     return {
         add,
-        rm,
+        data,
         pop,
-        data
+        rm,
+        tags
     }
+}
+
+function flatten(x) {
+    return (Array.isArray(x)) ? x.reduce((m, n) => m.concat(flatten(n)), []) : x
 }

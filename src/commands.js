@@ -1,10 +1,25 @@
 'use strict'
 
 const parse = require('./parse.js'),
-      fmt = require('./fmt.js')
+      f = require('./fmt.js'),
+      { padStr } = require('./utils'),
+      chalk = require('chalk')
 
-// TODO: tags, edit
-module.exports = { add, dates, help, print, queue, rm, summarise }
+const c = {
+    title: chalk.magenta.bold,
+    date: chalk.green,
+    tag: chalk.cyan,
+    duration: chalk.red,
+    timeRange: chalk.white,
+    action: chalk.yellow.italic,
+    index: chalk.blue,
+    fill: chalk.white
+}
+
+const fmt = f(c)
+
+// TODO: edit
+module.exports = { add, dates, help, print, queue, rm, summarise, tags }
 
 function add(log, argArr) {
     const [tags, arr] = parse.parseTags(argArr),
@@ -79,15 +94,15 @@ function print(log, argArr) {
     if (log.data[time] && log.data[time].length > 0) {
         const opts = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }
         console.log(fmt.date(Number(time), opts))
-        log.data[time].forEach((n, i) => console.log(`    ${fmt.entry(n, i)}`))
+        log.data[time].forEach((n, i) => console.log(padStr.left(fmt.entry(n, i), ' ', 4)))
     }
 }
 
-// TODO: Add tags summary & date range
 function summarise(log) {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
+    console.log(c.title('Top 5 entries:'))
     const entries = new Array(7).fill(0)
                                 .map((_, i) => `${today.setHours(-24 * i)}`)
                                 .filter(n => Object.keys(log.data).indexOf(n) > -1)
@@ -96,6 +111,30 @@ function summarise(log) {
 
     entries.sort((a, b) => a.duration < b.duration)
            .slice(0, 5)
-           .forEach((n, i) =>
-               console.log(`${fmt.date(n.start, { weekday: 'long' })}\t${fmt.entry(n, i)}`))
+           .forEach((n, i) => {
+               const opts = { weekday: 'short', day: 'numeric', month: 'short' }
+               console.log(`${fmt.date(n.start, opts)} ${fmt.entry(n, i)}`)
+           })
+
+    console.log(c.title('\nBy Tag:'))
+    const tags = log.tags().reduce((m, t) => {
+        const e = entries.filter(n => n.tags.indexOf(t) > -1)
+                         .reduce((m, n) => m + n.duration, 0)
+        if (e) m[t] = e
+        return m
+    }, {})
+
+    Object.keys(tags).sort((a, b) => tags[a] < tags[b])
+        .forEach(n => console.log(`${c.tag(n)} ${fmt.elapsed(tags[n])}`))
+
+    const f = [
+        `\nTotal hrs: ${fmt.elapsed(entries.reduce((m, n) => m + n.duration, 0))}`,
+        `Tags: ${c.tag(log.tags().length)}`,
+        `Entries: ${c.action(entries.length)}`
+    ].join(' ')
+    console.log(`\n${c.fill(f)}`)
+}
+
+function tags(log) {
+    console.log(c.tag(fmt.tag(log.tags())))
 }
