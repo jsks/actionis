@@ -1,84 +1,73 @@
 'use strict'
 
-module.exports = { parseRange, parseDate, parseTags, parseTime }
+const { today } = require('./utils.js')
 
-function findDate(strs) {
-    for (let i = 0; i < strs.length; i++)
-        if (strs[i].charAt(0) === '@') return i
+module.exports = function(str) {
+    if (!str || str.length == 0)
+        return {}
 
-    return -1
+    function parse(gen, tree) {
+        const token = gen.next()
+        if (token.done)
+            return tree
+
+        if (/^\d{1,2}(.\d{2})?(\s*-\s*\d{1,2}(.\d{2})?)?$/.test(token.value))
+            tree.times = parseTimes(token.value)
+        else if (token.value.charAt(0) == '@')
+            tree.dates = parseDates(token.value.slice(1))
+        else if (token.value.charAt(0) == '+')
+            tree.tags.push(token.value.toLowerCase())
+        else
+            tree.activity.push(token.value)
+
+        return parse(gen, tree)
+    }
+
+    const gen = tokenizer(str),
+          token = gen.next(),
+          cmd = token.value,
+          argTree = { cmd, activity: [], tags: [] }
+
+    return parse(gen, argTree)
+}
+
+function* tokenizer(str) {
+    const i = str.search(/[^-]\s(?!-)/)
+    if (i > -1) {
+        yield str.slice(0, i + 1)
+        yield* tokenizer(str.slice(i + 2))
+    } else {
+        yield str
+    }
 }
 
 function convertDate(str) {
     switch (str) {
-    case 'today':
-        return today().getTime()
-    case 'yesterday':
-        const date = today()
-        date.setDate(date.getDate() - 1)
-        return date.getTime()
-    default:
-        const datestr = (/^\d{1,2}\/\d{1,2}$/.test(str)) ?
-            `${new Date().getFullYear()}/${str}` :
-        str
-        return new Date(datestr).getTime()
+        case 'today':
+            return today().getTime()
+        case 'yesterday':
+            return today().setHours(-24)
+        default:
+            const datestr = (/^\d{1,2}\/\d{1,2}$/.test(str)) ?
+                `${new Date().getFullYear()}/${str}` :
+                str
+            return new Date(datestr).getTime()
     }
 }
 
-function parseDate(argArr) {
-    const dateIndex = findDate(argArr),
-        date = (dateIndex > -1) ? convertDate(argArr[dateIndex].slice(1)) : today().getTime(),
-          tail = (dateIndex > -1) ? argArr.filter((n, i) => i != dateIndex) : argArr
+function parseDates(dateStr) {
+    if (dateStr.charAt(0) == '[' && dateStr.charAt(dateStr.length-1) == ']') {
+        const s = dateStr.match(/\[(.*)\]/)[1]
+        if (!s || !/.*-.*/.test(s))
+            throw 'Invalid date range'
 
-    if (isNaN(date))
-        throw 'Invalid date'
-
-    return [date, tail]
+        const [start, stop] = s.split('-').map(n => convertDate(n.trim()))
+        return { start, stop }
+    } else
+        return { stop: convertDate(dateStr) }
 }
 
-function findRange(str) {
-    const r = str.match(/\d{1,2}(.\d{2})?\s*-\s*\d{1,2}(.\d{2})?/)
-    return (r) ? [r[0], r.index] : ['', -1]
-}
-
-function parseRange(date, argStr) {
-    const [range, rangeIndex] = findRange(argStr)
-    if (rangeIndex == -1)
-        throw 'Invalid range'
-
-    const [start, stop] = range.replace(/\s*/g, '').split('-').map(n => {
-        const d = new Date(date),
-            [hours, mins] = n.split('.')
-        d.setHours(hours, mins || 0, 0, 0)
-
-        return d.getTime()
-    })
-
-    const entry = argStr.slice(0, rangeIndex) + argStr.slice(range.length + 1)
-
-    return [start, stop, entry]
-}
-
-function parseTags(argArr) {
-    return [ argArr.filter(n => n.charAt(0) == '+').map(n => n.toLowerCase()),
-             argArr.filter(n => n.charAt(0) != '+') ]
-}
-
-function parseTime(argArr) {
-    const date = new Date(),
-        r = argArr.findIndex(n => /\d{1,2}(.\d{1,2})?/.test(n))
-
-    if (r > -1) {
-        const [hours, mins] = argArr[r].split('.')
-        date.setHours(hours, mins || 0, 0, 0)
-    }
-
-    const tail = argArr.filter((n, i) => i != r)
-    return [date.getTime(), tail]
-}
-
-function today() {
-    const date = new Date()
-    date.setHours(0, 0, 0, 0)
-    return date
+function parseTimes(timeStr) {
+    const [start, stop] = timeStr.split('-').map(n => n.trim())
+    return (!stop) ? { stop: start} : { start, stop }
 }
