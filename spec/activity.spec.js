@@ -1,12 +1,12 @@
 'use strict'
 
 const activity = require('../lib/activity.js'),
-      utils = require('./utils.js')
+      helpers = require('./helpers.js')
 
 
 describe('Testing activity with', function() {
     const log = activity(),
-          time = utils.date().getTime()
+          time = helpers.today
 
     const add1 = {
         start: '10.40',
@@ -17,12 +17,10 @@ describe('Testing activity with', function() {
     }
 
     it('adding new entry', function() {
-        log.add(time, utils.clone(add1))
-        expect(Object.keys(log.data).map(Number)).toEqual([time])
-
-        const add2 = utils.clone(log.data[time][0])
-        delete add2.timestamp
-        expect(add2).toEqual(add1)
+        log.add(time, helpers.clone(add1))
+        expect(Object.keys(log.data).filter(n => n != 'queue')
+                                    .map(Number)).toEqual([time])
+        expect(log.data[time][0]).toEqual(jasmine.objectContaining(add1))
     })
 
     const add2 = {
@@ -34,24 +32,24 @@ describe('Testing activity with', function() {
     }
 
     it('adding twice', function() {
-        log.add(time, utils.clone(add2))
-        expect(Object.keys(log.data).map(Number)).toEqual([time])
+        log.add(time, helpers.clone(add2))
+        expect(Object.keys(log.data).filter(n => n != 'queue')
+                                    .map(Number)).toEqual([time])
+        expect(log.data[time]).toEqual([jasmine.objectContaining(add2),
+                                        jasmine.objectContaining(add1)])
+    })
 
-        const added = log.data[time].map(n => {
-            const o = utils.clone(n)
-            delete o.timestamp
-            return o
-        })
-        expect(added).toEqual([add2, add1])
+    it('deleting nonexistent time', function() {
+        expect(() => log.rm(helpers.date('3/4'), 1)).toThrow()
+        expect(log.data[time]).toEqual([jasmine.objectContaining(add2),
+                                        jasmine.objectContaining(add1)])
     })
 
     it('deleting entry', function() {
         log.rm(time, 1)
-        expect(Object.keys(log.data).map(Number)).toEqual([time])
-
-        const add2 = utils.clone(log.data[time][0])
-        delete add2.timestamp
-        expect(add2).toEqual(add1)
+        expect(Object.keys(log.data).filter(n => n != 'queue')
+                                    .map(Number)).toEqual([time])
+        expect(log.data[time]).toEqual([jasmine.objectContaining(add1)])
     })
 
     describe('queue', function() {
@@ -62,19 +60,18 @@ describe('Testing activity with', function() {
         }
 
         it('add', function() {
-            log.add('queue', utils.clone(queue1))
-            const queue2 = log.data.queue[0]
-            delete queue2.timestamp
-
-            expect(log.data.queue[0]).toEqual(queue1)
+            log.add('queue', helpers.clone(queue1))
+            expect(log.data.queue[0]).toEqual(jasmine.objectContaining(queue1))
         })
 
         it('pop', function() {
             const queue2 = log.pop()
-            delete queue2.timestamp
-
-            expect(queue2).toEqual(queue1)
+            expect(queue2).toEqual(jasmine.objectContaining(queue1))
             expect(log.data.queue).toEqual([])
+        })
+
+        it('empty pop', function() {
+            expect(log.pop()).not.toBeDefined()
         })
     })
 })
