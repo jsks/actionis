@@ -1,28 +1,45 @@
 'use strict'
 
 const fs = require('fs'),
-      os = require('os'),
+      parse = require('./parse.js'),
       commands = require('./commands.js'),
-      activity = require('./activity.js')
+      activity = require('./activity.js'),
+      { parseConfigArg, loadConfig } = require('./config.js'),
+      { isFile } = require('./utils.js')
 
-const jsonFile = `${os.homedir()}/.local/actionis/log.json`
+function error(msg) {
+    console.error(msg)
+    process.exit(1)
+}
 
-module.exports.exec = function(args) {
-    const cmd = args[0]
+module.exports = function(args) {
+    const { configFile, tailArgs = [] } = parseConfigArg(args),
+          { cmd, ...argTree } = parse(tailArgs.join(' '))
 
-    if (!cmd) {
-        console.log(Object.keys(commands).sort().join(' '))
-        process.exit(0)
-    } else if (Object.keys(commands).indexOf(cmd) == -1) {
-        console.error('Invalid command')
-        process.exit(1)
-    }
+    try {
+        const configData = (isFile(configFile))
+              ? JSON.parse(fs.readFileSync(configFile))
+              : undefined
 
-    fs.readFile(jsonFile, function(err, data) {
-        const log = activity(JSON.parse(data)),
-              out = commands[cmd](log, args.slice(1))
+        const config = loadConfig(configData)
+
+        if (!isFile(config.jsonFile))
+            throw 'Log file not found!'
+
+        const log = JSON.parse(fs.readFileSync(config.jsonFile)),
+              fns = commands(activity(log), config.colors)
+
+        if (!cmd) {
+            console.log(Object.keys(fns).sort().join(' '))
+            process.exit(0)
+        } else if (!fns)
+            error('Invalid command')
+
+        const out = fns[cmd](argTree)
 
         if (out)
-            fs.writeFileSync(jsonFile, JSON.stringify(out))
-    })
+            fs.writeFileSync(config.jsonFile, JSON.stringify(out.data))
+    } catch (e) {
+        error(e)
+    }
 }
