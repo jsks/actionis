@@ -1,85 +1,152 @@
 'use strict'
 
 const parse = require('../lib/parse.js'),
-      utils = require('./utils.js')
+      helpers = require('./helpers.js')
 
-const today = utils.date().getTime()
-
-describe('Check parsing date:', function() {
-    it('today', function() {
-        const out = [today, ['Run', 'away']]
-        expect(parse.parseDate(['@today', 'Run', 'away'])).toEqual(out)
+describe('Parse components:', function() {
+    it('cmd', function() {
+        expect(parse('add')).toEqual({
+            cmd: 'add',
+            tail: [],
+            tags: []
+        })
     })
 
-    it('yesterday', function() {
-        const d = utils.date()
-        d.setDate(d.getDate() - 1)
-        const yesterday = d.getTime(),
-              out = [yesterday, []]
-        expect(parse.parseDate(['@yesterday'])).toEqual(out)
+    describe('date', function() {
+        it('today', function() {
+            const a = parse('rm @today')
+            expect(a.date).toEqual(helpers.today)
+        })
+
+        it('yesterday', function() {
+            const b = parse('queue @yesterday')
+            expect(b.date).toEqual(helpers.yesterday)
+        })
+
+        it('3/4', function() {
+            const c = parse('add @3/4')
+            expect(c.date).toEqual(new Date('3/4/2016').getTime())
+        })
+
+        it('range 3/4 - 3/7', function() {
+            const d = parse('print @[3/4 - 3/7]')
+            expect(d.date).toEqual({
+                start: new Date('3/4/2016').getTime(),
+                stop: new Date('3/7/2016').getTime()
+            })
+        })
+
+        it('range yesterday - today', function() {
+            const e = parse('print @[yesterday - today]')
+            expect(e.date).toEqual({
+                start: helpers.yesterday,
+                stop: helpers.today
+            })
+        })
+
+        it('invalid date range', function() {
+            expect(() => parse('print @[yesterday]')).toThrow()
+        })
+
+        it('empty date range', function() {
+            expect(() => parse('print @[]')).toThrow()
+        })
+
+        it('invalid date', function() {
+            expect(() => parse('print @no')).toThrow()
+        })
     })
 
-    it('8/10', function() {
-        const d = utils.date('8/10')
-        d.setYear(2016)
+    describe('time', function() {
+        it('10.00', function() {
+            const o = parse('add 10.00')
+            expect(o.time).toEqual(helpers.date().setHours(10))
+        })
 
-        const out = [d.getTime(), ['Watch', 'tv']]
-        expect(parse.parseDate(['@8/10', 'Watch', 'tv'])).toEqual(out)
+        it('14.23', function() {
+            const o = parse('add 14.23')
+            expect(o.time).toEqual(helpers.date().setHours(14, 23))
+        })
+
+        it('7', function() {
+            const o = parse('add 7')
+            expect(o.time).toEqual(helpers.date().setHours(7))
+        })
+
+        it('range 8.23 - 8.56', function() {
+            const o = parse('add 8.23 - 8.56')
+            expect(o.time).toEqual({
+                start: helpers.date().setHours(8, 23),
+                stop: helpers.date().setHours(8, 56)
+            })
+        })
+
+        it('range 13.35-15.00', function() {
+            const o = parse('add 13.35-15.00')
+            expect(o.time).toEqual({
+                start: helpers.date().setHours(13, 35),
+                stop: helpers.date().setHours(15)
+            })
+        })
+
+        it('invalid time range', function() {
+            expect(() => parse('add 13.56 - 45.45')).toThrow()
+        })
+
+        it('invalid time', function() {
+            expect(() => parse('add 13.99')).toThrow()
+        })
     })
 
-    it('empty', function() {
-        const out = [today, ['Developed', 'world']]
-        expect(parse.parseDate(['Developed', 'world'])).toEqual(out)
+    it('tags +run +tv', function() {
+        const o = parse('add +run +tv')
+        expect(o.tags).toEqual(['+run', '+tv'])
     })
 
-    it('invalid', function() {
-        expect(function() {
-            parse.parseDate(['@99/99', '90', 'minutes'])
-        }).toThrow('Invalid date')
+    it('tail', function() {
+        it('running with wolves', function() {
+            const o = parse('add running with wolves')
+            expect(o.tail).toEqual(['running', 'with', 'wolves'])
+        })
     })
 })
 
-describe('Check parsing range:', function() {
-    it('no space b/w times', function() {
-        const out = [utils.date().setHours(10), utils.date().setHours(13), 'run away']
-        expect(parse.parseRange(today, '10-13 run away')).toEqual(out)
+describe('parse full strings:', function() {
+    it('full add w/ single date', function() {
+        expect(parse('add @today watched tv +tv 10.00 - 11.30')).toEqual({
+            cmd: 'add',
+            date: helpers.today,
+            time: {
+                start: helpers.date().setHours(10),
+                stop: helpers.date().setHours(11, 30)
+            },
+            tags: ['+tv'],
+            tail: ['watched', 'tv']
+        })
     })
 
-    it('space b/w times', function() {
-        const out = [utils.date().setHours(11, 39), utils.date().setHours(14, 23), '']
-        expect(parse.parseRange(today, '11.39 - 14.23')).toEqual(out)
+    it('full print w/ date range', function() {
+        expect(parse('print +tv @[3/5-4/5]')).toEqual({
+            cmd: 'print',
+            date: {
+                start: new Date('3/5/2016').getTime(),
+                stop: new Date('4/5/2016').getTime()
+            },
+            tags: ['+tv'],
+            tail: []
+        })
     })
 
-    it('parse dates with single digits', function() {
-        const out = [utils.date().setHours(8), utils.date().setHours(12), '']
-        expect(parse.parseRange(today, '8.00-12.00')).toEqual(out)
+    it('parse index with rm', function() {
+        expect(parse('rm @3/23 1 2')).toEqual({
+            cmd: 'rm',
+            date: new Date('3/23/2016').getTime(),
+            tags: [],
+            tail: ['1', '2']
+        })
     })
 
-    it('invalid', function() {
-        expect(function() {
-            parse.parseRange(today, '')
-        }).toThrow('Invalid range')
-    })
-})
-
-describe('Check parsing tags:', function() {
-    it('proper', function() {
-        const out = [['+programming', '+tv'], ['run', 'with', 'wolves']]
-        expect(parse.parseTags(['+programming', '+tv', 'run', 'with', 'wolves'])).toEqual(out)
-    })
-
-    it('missing', function() {
-        expect(parse.parseTags(['watch', 'tv'])).toEqual([[], ['watch', 'tv']])
-    })
-})
-
-describe('Check parsing time:', function() {
-    it('proper', function() {
-        const time = utils.date().setHours(10, 13, 0, 0)
-        expect(parse.parseTime(['10.13', 'program'])).toEqual([time, ['program']])
-    })
-
-    it('missing', function() {
-        expect(parse.parseTime(['watch', 'tv'])).toEqual([Date.now(), ['watch', 'tv']])
+    it('empty string', function() {
+        expect(parse()).toEqual({})
     })
 })
