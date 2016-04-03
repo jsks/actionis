@@ -16,7 +16,7 @@ function parseConfigArg(args) {
     }
 }
 
-function loadConfig(data = { colors: {} }) {
+function loadConfig({ colors = {}, jsonFile } = {}) {
     const defaultColors = {
         title: chalk.magenta.bold,
         date: chalk.green,
@@ -28,14 +28,14 @@ function loadConfig(data = { colors: {} }) {
         fill: chalk.white
     }
 
-    const colors = Object.assign(objMap(data.colors, (k, v) => {
+    const colorsMerged = Object.assign(objMap(colors, (k, v) => {
         const [c1, c2] = v.split('.')
 
         return (c2) ? chalk[c1][c2] : chalk[c1]
     }), defaultColors)
 
     return {
-        colors,
-        jsonFile: untildify(data.jsonFile || '~/.config/actionis/log.json')
+        colors: colorsMerged,
+        jsonFile: untildify(jsonFile || '~/.config/actionis/log.json')
     }
 }
