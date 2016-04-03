@@ -6,8 +6,10 @@ const commands = require('../lib/commands.js'),
       helpers = require('./helpers.js')
 
 describe('Checking activity commands:', function() {
+    beforeEach(() => spyOn(console, 'log'))
+
     const log = activity(),
-          cmds = commands(log, {})
+          cmds = commands(log, helpers.colors)
 
     describe('add', function() {
         it('normal', function() {
@@ -15,7 +17,6 @@ describe('Checking activity commands:', function() {
                   stop = helpers.date().setHours(13, 30)
 
             const args = {
-                date: helpers.today,
                 time: {
                     start: start,
                     stop: stop
@@ -33,13 +34,14 @@ describe('Checking activity commands:', function() {
                 activity: 'watch tv',
                 tags: ['+tv']
             }))
+            expect(console.log).toHaveBeenCalled()
         })
 
         // Add multiple entries for 'rm' test
         for (let i = 0; i < 3; i++) {
             it('yesterday', function() {
                 const start = helpers.date().setHours(20, 23),
-                    stop = helpers.date().setHours(23, 1)
+                      stop = helpers.date().setHours(23, 1)
 
                 const args = {
                     date: helpers.yesterday,
@@ -51,15 +53,16 @@ describe('Checking activity commands:', function() {
                     tags: ['+running', '+ohno', '+dead']
                 }
 
-                const obj = cmds.add(args).data[helpers.yesterday][0]
+                const obj = cmds.add(args).data[helpers.yesterday][i]
 
                 expect(obj).toEqual(jasmine.objectContaining({
                     start: start,
                     stop: stop,
                     duration: stop - start,
                     activity: 'ran into the woods',
-                    tags: ['+running', '+ohno', '+dead']
+                    tags: ['+dead', '+ohno', '+running']
                 }))
+                expect(console.log).toHaveBeenCalled()
             })
         }
 
@@ -102,11 +105,13 @@ describe('Checking activity commands:', function() {
                 tail: ['1']
             })
             expect(log.data[helpers.yesterday].length).toEqual(2)
+            expect(console.log).toHaveBeenCalled()
         })
 
         it('w/o date', function() {
             cmds.rm({ tail: ['1'] })
             expect(log.data[helpers.today]).not.toBeDefined()
+            expect(console.log).not.toHaveBeenCalled()
         })
 
         it('w/o index', function() {
@@ -138,6 +143,7 @@ describe('Checking activity commands:', function() {
                 tail: ['1', '2']
             })
             expect(log.data[helpers.yesterday]).not.toBeDefined()
+            expect(console.log).not.toHaveBeenCalled()
         })
 
         it('invalid index', function() {
@@ -222,21 +228,19 @@ describe('Checking activity commands:', function() {
         it('empty', function() {
             expect(() => cmds.queue({ tail: ['pop']})).toThrow()
         })
+
+        it('multiple queues and clear', function() {
+            for (let i = 0; i < 4; i++)
+                cmds.queue({ tail: [], tags: [] })
+            cmds.queue({ tail: ['clear'] })
+            expect(log.data.queue).toEqual([])
+        })
     })
 })
 
 describe("Checking output commands:", function() {
-    const id = n => n,
-          colorProps = ['date', 'index', 'timeRange', 'duration', 'action',
-                        'tag', 'fill', 'title']
-
-    const colors = colorProps.reduce((m, n) => {
-        m[n] = id
-        return m
-    }, {})
-
     const log = activity({}),
-          cmds = commands(log, colors)
+          cmds = commands(log, helpers.colors)
 
     beforeEach(() => {
         spyOn(console, 'log')

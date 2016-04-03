@@ -24,6 +24,8 @@ module.exports = function(log, colors) {
             tags: argTree.tags
         })
 
+        print({ date: argTree.date || today().getTime(), tags: [] })
+
         return log
     }
 
@@ -69,7 +71,9 @@ module.exports = function(log, colors) {
         }
 
         function clear() {
-            log.data.queue.forEach((_, i) => log.rm('queue', i))
+            log.rm('queue', 1)
+            if (log.data.queue.length > 0)
+                clear()
 
             return log
         }
@@ -109,6 +113,8 @@ module.exports = function(log, colors) {
 
         unique(tail).sort((a, b) => a < b)
             .forEach(n => log.rm(date, n))
+
+        print({ date, tags: [] })
 
         return log
     }
