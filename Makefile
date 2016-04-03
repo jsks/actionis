@@ -1,7 +1,7 @@
 src_files := $(wildcard src/*.js)
 lib_files := $(src_files:src/%.js=lib/%.js)
 
-.PHONY: all clean test
+.PHONY: all clean lint test
 
 all: $(lib_files)
 
@@ -12,5 +12,8 @@ lib/%.js: src/%.js
 clean:
 	@rm -rf lib/
 
-test:
+lint: 
+	@eslint $(src_files)
+
+test: $(lib_files)
 	@istanbul cover -x "**/spec/**" jasmine
