@@ -1,28 +1,45 @@
 Actionis: cli activity log
 
-Usage: actionis [CMD] @[WHEN] [<time> <activity>|<index>]
-    Specific a command followed by an optional date (default: today) prefixed
-    with an @ with either a time range and activity or an index related to the
-    list of currently saved activities.
+Logs activities according to a provided start and stop time for a specified
+date. Entries can also include tags to easily search across dates. Options are
+mostly specified through string formatting, ex:
+
+    $ actionis add @12/21 /10.00 - 11.31/ watched tv +tv
+
+Usage: actionis [OPTIONS] [CMD] <@date> </time/> [<activity>|<index>] <+tags>
+
+OPTIONS
+    -c | --config    Specify the location of a configuration file (default:
+                     ~/.config/actionis/config.json)
     
 CMDS
-    add: Add an activity to the log for a specificied date.
-        - Indicate a time range (ex. 10.40-12.32) and an activity (ex.
-          "Running")
-    rm: Remove an activity from the log.
-        - Remove by index
-    print: Output list of activities for a given date.
+    add:          Add an activity to the log for a specificied date
+    dates:        Output all dates for which there is an entry in the log
+    print:        Output list of activities for a given date(s) and/or tag(s)
+    queue:        Commands to manipulate queue
+    rm:           Remove one or more activity from the log
+    summarise:    Output summary for given date range
+    tags:         Output tags for given date(s)
 
-Note: if no command is given, actionis defaults to `add`
-    
-WHEN
-    Each command accepts an optional specificed date, otherwise the default is
-    the current date. `Month/day` is accepted as well as the strings 'today'
-    and 'yesterday'
+FORMAT
+    DATE
+        Dates are prefixed by a '@'. Ranges can be included using brackets (ex.
+        @[3/24 - 3/27]). The strings 'today' and 'yesterday' will be expanded to
+        their respective dates. Default: today's date.
+
+    TIME
+        Times are deliminated by '/' and can include a range to specify start and
+        stop.
+
+    TAGS
+        Tags are prefixed by '+' and separated by space or token (ex. +hiking
+        +exercise).
 
 Examples
 
-    $ actionis add @yesterday 13.10-14.23 Watch TV
-    $ actionis 15.23-17.56 Run away from wolves
-    $ actionis rm @8/3 2
-    $ actionis print
+    $ actionis add @yesterday /13.10-14.23/ finished actionis summary function +programming
+    $ actionis print +programming
+    $ actionis rm @yesterday 1
+    $ actionis queue
+    $ actionis queue pop finished help.txt +programming
+
