@@ -3,9 +3,13 @@
 const { msToHrs, padNum } = require('./utils.js')
 
 module.exports = function(colors) {
-    function entry({ start = Date.now(), stop = Date.now(), duration = stop - start, activity, tags } = {}, i) {
+    function entry({
+        start = Date.now(),
+        stop = Date.now(),
+        duration = stop - start,
+        activity, tags } = {}, i) {
         const e = [
-            ((i > -1) ? colors.index(`${i+1}`)  : ''),
+            ((i > -1) ? colors.index(`${i + 1}`) : ''),
             timeRange(start, stop),
             elapsed(duration),
             '::',
@@ -32,8 +36,8 @@ module.exports = function(colors) {
         return colors.timeRange(`${time(new Date(start))}-${time(new Date(stop))} =>`)
     }
 
-    function tag(t) {
-        return (t) ? `${colors.tag(t.sort().join(' '))}` : ''
+    function tag(t = []) {
+        return `${colors.tag(t.sort().join(' '))}`
     }
 
     return {

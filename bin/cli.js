@@ -1,6 +1,6 @@
 #!/usr/bin/env node
+'use strict'
 
-const Actionis = require('../lib/actionis.js')
+const actionis = require('../lib/actionis.js')
 
-Actionis.exec(process.argv.slice(2))
-
+actionis(process.argv.slice(2))

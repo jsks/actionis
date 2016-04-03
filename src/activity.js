@@ -1,48 +1,38 @@
 'use strict'
 
-module.exports = function(data) {
-    if (!data)
-        data = {}
+const { flatten, unique } = require('./utils.js')
 
-    function add(time, entry) {
-        if (!data[time])
-            data[time] = []
+module.exports = function(data = { queue: [] }) {
+    function add(date, entry) {
+        if (!data[date])
+            data[date] = []
 
         entry.timestamp = Date.now()
-        data[time].push(entry)
+        data[date].push(entry)
 
-        data[time] = data[time].sort((a, b) => {
-            return (a.start > b.start) ? -1 : 1
-        })
+        data[date] = data[date].sort((a, b) => a.start < b.start)
     }
 
     function pop() {
-        if (data.queue)
-            return data.queue.pop()
+        return data.queue.pop()
     }
 
-    function rm(time, index) {
-        if (data[time])
-            data[time].splice(index - 1, 1)
+    function rm(date, index) {
+        if (data[date]) {
+            data[date].splice(index - 1, 1)
 
-        if (data[time].length == 0)
-            delete data[time]
+            if (data[date].length == 0 && date != 'queue')
+                delete data[date]
+        } else
+            throw 'Empty date'
     }
 
-    function tags(time) {
-        const t = Object.keys(data).map(k => data[k].map(n => n.tags))
-        return flatten(t).filter((n, i, a) => a.indexOf(n) == i)
+    function tags(dates = Object.keys(data)) {
+        const t = dates.filter(n => Object.keys(data).indexOf(n) > -1)
+                       .map(k => data[k].map(n => n.tags))
+
+        return unique(flatten(t))
     }
 
-    return {
-        add,
-        data,
-        pop,
-        rm,
-        tags
-    }
-}
-
-function flatten(x) {
-    return (Array.isArray(x)) ? x.reduce((m, n) => m.concat(flatten(n)), []) : x
+    return { add, data, pop, rm, tags }
 }
