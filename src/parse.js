@@ -12,9 +12,8 @@ module.exports = function(str) {
         if (token.done)
             return tree
 
-        if (/^\d{1,2}(.\d{2})?(\s*-\s*\d{1,2}(.\d{2})?)?$/.test(token.value)
-            && tree.cmd != 'rm')
-            tree.time = parseTimes(token.value)
+        if (/^\/\d{1,2}(.\d{2})?(\s*-\s*\d{1,2}(.\d{2})?)?\/$/.test(token.value))
+            tree.time = parseTimes(token.value.slice(1, token.value.length - 1))
         else if (token.value.charAt(0) == '@')
             tree.date = parseDates(token.value.slice(1))
         else if (token.value.charAt(0) == '+')
@@ -34,7 +33,7 @@ module.exports = function(str) {
 }
 
 function* tokenizer(str) {
-    const i = str.search(/[^-]\s(?!-)/)
+    const i = str.search(/[^-]\s+(?!-)/)
 
     if (i > -1 && str.length > 1) {
         yield str.slice(0, i + 1)

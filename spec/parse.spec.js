@@ -59,22 +59,22 @@ describe('Parse components:', function() {
 
     describe('time', function() {
         it('10.00', function() {
-            const o = parse('add 10.00')
+            const o = parse('add /10.00/')
             expect(o.time).toEqual(helpers.date().setHours(10))
         })
 
         it('14.23', function() {
-            const o = parse('add 14.23')
+            const o = parse('add /14.23/')
             expect(o.time).toEqual(helpers.date().setHours(14, 23))
         })
 
         it('7', function() {
-            const o = parse('add 7')
+            const o = parse('add /7/')
             expect(o.time).toEqual(helpers.date().setHours(7))
         })
 
         it('range 8.23 - 8.56', function() {
-            const o = parse('add 8.23 - 8.56')
+            const o = parse('add /8.23 - 8.56/')
             expect(o.time).toEqual({
                 start: helpers.date().setHours(8, 23),
                 stop: helpers.date().setHours(8, 56)
@@ -82,7 +82,7 @@ describe('Parse components:', function() {
         })
 
         it('range 13.35-15.00', function() {
-            const o = parse('add 13.35-15.00')
+            const o = parse('add /13.35-15.00/')
             expect(o.time).toEqual({
                 start: helpers.date().setHours(13, 35),
                 stop: helpers.date().setHours(15)
@@ -90,11 +90,11 @@ describe('Parse components:', function() {
         })
 
         it('invalid time range', function() {
-            expect(() => parse('add 13.56 - 45.45')).toThrow()
+            expect(() => parse('add /13.56 - 45.45/')).toThrow()
         })
 
         it('invalid time', function() {
-            expect(() => parse('add 13.99')).toThrow()
+            expect(() => parse('add /13.99/')).toThrow()
         })
     })
 
@@ -113,7 +113,7 @@ describe('Parse components:', function() {
 
 describe('parse full strings:', function() {
     it('full add w/ single date', function() {
-        expect(parse('add @today watched tv +tv 10.00 - 11.30')).toEqual({
+        expect(parse('add @today watched tv +tv /10.00 - 11.30/')).toEqual({
             cmd: 'add',
             date: helpers.today,
             time: {
