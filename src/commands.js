@@ -119,10 +119,7 @@ module.exports = function(log, colors) {
         return log
     }
 
-    function print({
-        date = Object.keys(log.data).filter(n => n != 'queue'),
-        tags
-    }) {
+    function print({ date = today().getTime(), tags }) {
         function out(d) {
             if (log.data[d]) {
                 const e = log.data[d].filter(n => {
