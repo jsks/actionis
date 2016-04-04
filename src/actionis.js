@@ -38,7 +38,7 @@ module.exports = function(args) {
         const out = fns[cmd](argTree)
 
         if (out)
-            fs.writeFileSync(config.jsonFile, JSON.stringify(out.data))
+            fs.writeFileSync(config.jsonFile, JSON.stringify(out.data) + '\n')
     } catch (e) {
         error(e)
     }
