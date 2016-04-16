@@ -13,6 +13,10 @@ module.exports = function(data = { queue: [] }) {
         data[date] = data[date].sort((a, b) => a.start < b.start)
     }
 
+    function keys() {
+        return Object.keys(data).filter(n => n != 'queue').map(Number)
+    }
+
     function pop() {
         return data.queue.pop()
     }
@@ -27,12 +31,12 @@ module.exports = function(data = { queue: [] }) {
             throw 'Empty date'
     }
 
-    function tags(dates = Object.keys(data)) {
-        const t = dates.filter(n => Object.keys(data).indexOf(n) > -1)
+    function tags(dates = keys()) {
+        const t = dates.filter(n => keys().indexOf(n) > -1)
                        .map(k => data[k].map(n => n.tags))
 
         return unique(flatten(t))
     }
 
-    return { add, data, pop, rm, tags }
+    return { add, data, keys, pop, rm, tags }
 }
