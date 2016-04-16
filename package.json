@@ -1,6 +1,6 @@
 {
   "name": "actionis",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "cli activity log",
   "main": "lib/actionis.js",
   "bin": {
