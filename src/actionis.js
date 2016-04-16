@@ -1,7 +1,7 @@
 'use strict'
 
 const fs = require('fs'),
-      activity = require('./activity.js'),
+      log = require('./log.js'),
       commands = require('./commands.js'),
       config = require('./config.js'),
       parse = require('./parse.js'),
@@ -24,8 +24,8 @@ module.exports = function(args) {
         if (!isFile(configData.jsonFile))
             throw 'Log file not found!'
 
-        const log = JSON.parse(fs.readFileSync(configData.jsonFile)),
-              fns = commands(activity(log), configData.colors)
+        const data = JSON.parse(fs.readFileSync(configData.jsonFile)),
+              fns = commands(log(data), configData.colors)
 
         if (!cmd) {
             console.log(Object.keys(fns).sort().join(' '))
