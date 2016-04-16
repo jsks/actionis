@@ -1,6 +1,8 @@
 'use strict'
 
-const { today } = require('./utils.js')
+const date = require('./date.js'),
+      time = require('./time.js'),
+      { append } = require('./utils.js')
 
 module.exports = function(str) {
     if (!str || str.length == 0)
@@ -15,19 +17,18 @@ module.exports = function(str) {
         if (/^\/\d{1,2}(.\d{2})?(\s*-\s*\d{1,2}(.\d{2})?)?\/$/.test(token.value))
             tree.time = parseTimes(token.value.slice(1, token.value.length - 1))
         else if (token.value.charAt(0) == '@')
-            tree.date = parseDates(token.value.slice(1))
+            tree.dates = append(tree.dates, parseDates(token.value.slice(1)))
         else if (token.value.charAt(0) == '+')
-            tree.tags.push(token.value.toLowerCase())
+            tree.tags = append(tree.tags, token.value.toLowerCase())
         else
-            tree.tail.push(token.value)
+            tree.tail = append(tree.tail, token.value)
 
         return parse(gen, tree)
     }
 
     const gen = tokenizer(str),
           token = gen.next(),
-          cmd = token.value,
-          argTree = parse(gen, { cmd, tail: [], tags: [] })
+          argTree = parse(gen, { cmd: token.value })
 
     return argTree
 }
@@ -42,27 +43,6 @@ function* tokenizer(str) {
         yield str
 }
 
-function convertDate(str) {
-    switch (str) {
-        case 'today':
-            return today().getTime()
-        case 'yesterday':
-            return today().setHours(-24)
-        default: {
-            const datestr = (/^\d{1,2}\/\d{1,2}$/.test(str))
-                ? `${new Date().getFullYear()}/${str}`
-                : str
-
-            const d = new Date(datestr)
-
-            if (isNaN(d))
-                throw 'Invalid date'
-
-            return d.getTime()
-        }
-    }
-}
-
 function parseDates(dateStr) {
     if (dateStr.charAt(0) == '[' && dateStr.charAt(dateStr.length - 1) == ']') {
         const s = dateStr.match(/\[(.*)\]/)[1]
@@ -70,32 +50,15 @@ function parseDates(dateStr) {
         if (!s || !/.*-.*/.test(s))
             throw 'Invalid date range'
 
-        const [start, stop] = s.split('-').map(n => convertDate(n.trim()))
+        const [start, stop] = s.split('-').map(n => date.convert(n.trim()))
 
-        return { start, stop }
+        return date.range(start, stop)
     } else
-        return convertDate(dateStr)
-}
-
-function convertTime(timeStr) {
-    const [hr, min = 0] = timeStr.split('.')
-
-    return today().setHours(hr, min)
+        return [date.convert(dateStr)]
 }
 
 function parseTimes(timeStr) {
-    function checkBounds(a) {
-        const [hr, min = 0] = a.split('.').map(Number)
+    const times = timeStr.split('-').map(time.convert)
 
-        return (hr <= 24 && hr >= 0) && (min <= 60 && min >= 0)
-    }
-
-    const times = timeStr.split('-')
-
-    if (!times.every(checkBounds))
-        throw 'Invalid time'
-
-    const [start, stop] = times.map(convertTime)
-
-    return (!stop) ? start : { start, stop }
+    return (!times[1]) ? times[0] : { start: times[0], stop: times[1] }
 }
