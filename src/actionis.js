@@ -1,10 +1,10 @@
 'use strict'
 
 const fs = require('fs'),
-      parse = require('./parse.js'),
-      commands = require('./commands.js'),
       activity = require('./activity.js'),
-      { parseConfigArg, loadConfig } = require('./config.js'),
+      commands = require('./commands.js'),
+      config = require('./config.js'),
+      parse = require('./parse.js'),
       { isFile } = require('./utils.js')
 
 function error(msg) {
@@ -13,21 +13,19 @@ function error(msg) {
 }
 
 module.exports = function(args) {
-    const { configFile, tailArgs = [] } = parseConfigArg(args),
+    const { configFile, tailArgs = [] } = config.parseCliArgs(args),
           { cmd, ...argTree } = parse(tailArgs.join(' '))
 
     try {
-        const configData = (isFile(configFile))
-              ? JSON.parse(fs.readFileSync(configFile))
-              : undefined
+        const configData = config.load((isFile(configFile))
+                                       ? JSON.parse(fs.readFileSync(configFile))
+                                       : undefined)
 
-        const config = loadConfig(configData)
-
-        if (!isFile(config.jsonFile))
+        if (!isFile(configData.jsonFile))
             throw 'Log file not found!'
 
-        const log = JSON.parse(fs.readFileSync(config.jsonFile)),
-              fns = commands(activity(log), config.colors)
+        const log = JSON.parse(fs.readFileSync(configData.jsonFile)),
+              fns = commands(activity(log), configData.colors)
 
         if (!cmd) {
             console.log(Object.keys(fns).sort().join(' '))
@@ -38,8 +36,11 @@ module.exports = function(args) {
         const out = fns[cmd](argTree)
 
         if (out)
-            fs.writeFileSync(config.jsonFile, JSON.stringify(out.data) + '\n')
+            fs.writeFileSync(configData.jsonFile, JSON.stringify(out.data) + '\n')
     } catch (e) {
+        if (e instanceof Error)
+            throw e
+
         error(e)
     }
 }

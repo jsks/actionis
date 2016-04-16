@@ -3,9 +3,9 @@
 const chalk = require('chalk'),
       { objMap, untildify } = require('./utils.js')
 
-module.exports = { parseConfigArg, loadConfig }
+module.exports = { parseCliArgs, load }
 
-function parseConfigArg(args) {
+function parseCliArgs(args) {
     const index = args.find(n => /^(--config|-c)$/.test(n))
 
     return {
@@ -16,7 +16,7 @@ function parseConfigArg(args) {
     }
 }
 
-function loadConfig({ colors = {}, jsonFile } = {}) {
+function load({ colors = {}, jsonFile } = {}) {
     const defaultColors = {
         title: chalk.magenta.bold,
         date: chalk.green,
