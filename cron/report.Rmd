@@ -1,0 +1,157 @@
+---
+title: "Weekly Report"
+output:
+  pdf_document: default
+  html_document:
+    fig_caption: no
+    theme: paper
+---
+
+<style type="text/css">
+h2 {
+    text-align: left;
+}
+
+body {
+    text-align: center;
+}
+
+.columnize {
+    column-count: 2;
+    -moz-column-count: 2;
+    -webkit-column-count: 2;
+}
+
+.columnize img {
+    width: 75%;
+    height: auto;
+}
+
+.summary {
+    text-align: left;
+}
+
+.graph {
+    text-align: center;
+}
+</style>
+
+
+```{r, echo=F}
+library(dplyr, warn.conflicts = F)
+library(ggplot2)
+library(jsonlite, quietly = T)
+library(rmarkdown)
+options(digits.sec = 3)
+
+convert_date <- function(n) {
+    as.POSIXct(n / 1000, origin = "1970-01-01")
+}
+
+msToHrs <- function(n) {
+    n / 1000 / 60 / 60
+}
+
+Time <- function(ms, ...) {
+    strftime(as.POSIXct(ms / 1000, tz = "GMT", ...), "%H.%M", tz = "GMT")
+}
+
+ordered_days <- weekdays(seq.Date(from = Sys.Date() - 6, to = Sys.Date(), by = 1), 
+                         abbreviate = F)
+dates.df <- data_frame(date = factor(ordered_days,ordered_days))
+
+l <- fromJSON(readLines("~/Dropbox/share/actionis-log_v2.json"))
+l$queue <- NULL
+
+data.df <- lapply(1:length(l), function(i) {
+    mutate(l[[i]], date = as.numeric(names(l)[i]) %>% convert_date %>% as.Date,
+                   duration = msToHrs(duration) %>% signif(digits = 3))
+}) %>% 
+    bind_rows %>% 
+    filter((Sys.Date() - 7) < date & date <= Sys.Date()) %>%
+    mutate(start = Time(start, origin = date),
+           stop = Time(stop, origin = date),
+           date = factor(weekdays(date, F), ordered_days)) %>%
+    full_join(dates.df, by = "date") %>%
+    mutate(duration = ifelse(is.na(duration), 0, duration)) %>%
+    select(-timestamp)
+
+tags <- unlist(data.df$tags) %>% unique
+hrs <- sum(data.df$duration)
+total_hrs <- nrow(data.df) * 15
+```
+
+## Top Entries
+
+```{r, echo=F}
+library(pander)
+na.omit(data.df) %>%
+    arrange(desc(duration)) %>%
+    pander(style = "rmarkdown")
+```
+
+## Top Tags
+
+```{r, echo=F}
+# This is embarrasing
+tags.df <- data.df %>% 
+    rowwise() %>% 
+    do({
+        tags <- unlist(.$tags)
+        len <- ifelse(is.null(tags), 1, length(tags))
+        lapply(1:len, function(i) {
+            l <- rep(.)
+            l$tags <- tags[i]
+            l
+        }) %>% bind_rows
+    }) %>% 
+    ungroup %>%
+    rename(tag = tags) %>%
+    na.omit
+
+comb.df <- expand.grid(tag = unique(tags.df$tag), date = ordered_days)
+tags.df <- mutate(tags.df, tag = as.factor(tag)) %>%
+    full_join(comb.df, by = c("tag", "date")) %>%
+    mutate(duration = ifelse(is.na(duration), 0, duration),
+           date = factor(date, ordered_days))
+
+ggplot(tags.df, aes(date, duration, group = tag, color = tag)) +
+    geom_point() + geom_line() + ylim(0, 16) + coord_fixed(ratio = 0.2) +
+    ggtitle("Tracked Duration by Tag") + theme(axis.title = element_blank())
+```
+
+### Total
+
+<div class="columnize">
+```{r echo=F}
+tags_totals.df <- group_by(tags.df, tag) %>%
+    summarise(total = sum(duration)) %>%
+    arrange(desc(total))
+
+ggplot(tags_totals.df, aes("", total, fill = tag)) + 
+    geom_bar(width = 1, stat = "identity") + 
+    coord_polar("y") +
+    theme(panel.background = element_rect(fill = "transparent", color = NA),
+          legend.title = element_blank(), 
+          legend.text = element_text(size = 20), axis.title = element_blank(),
+          axis.text = element_blank(), axis.ticks = element_blank())
+```
+
+`r pander(tail(tags_totals.df, 5))`
+</div>
+
+## Summary { .summary }
+
+    - Activities: `r nrow(data.df)`
+    - Tags: `r sapply(data.df$tags, length) %>% sum`
+    - Hours Logged: `r hrs`/`r total_hrs`
+    - Coverage: `r signif(hrs / total_hrs * 100, digits=4)`%
+
+<div class="graph">
+```{r, echo=F}
+ggplot(data = data.df, aes(date, duration)) + 
+    ggtitle("Hours Logged") + theme(axis.title = element_blank()) +
+    geom_bar(stat = "identity", show.legend = F) + 
+    ylim(0, 16)
+```
+</div>
