@@ -1,6 +1,6 @@
 'use strict'
 
-const activity = require('../lib/activity.js'),
+const activity = require('../lib/log.js'),
       helpers = require('./helpers.js')
 
 

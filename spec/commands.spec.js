@@ -1,7 +1,7 @@
 'use strict'
 
 const commands = require('../lib/commands.js'),
-      activity = require('../lib/activity.js'),
+      activity = require('../lib/log.js'),
       utils = require('../lib/utils.js'),
       helpers = require('./helpers.js')
 
