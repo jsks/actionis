@@ -24,8 +24,9 @@ CMDS
 FORMAT
     DATE
         Dates are prefixed by a '@'. Ranges can be included using brackets (ex.
-        @[3/24 - 3/27]). The strings 'today' and 'yesterday' will be expanded to
-        their respective dates. Default: today's date.
+        @[3/24 - 3/27]). The strings 'today', 'yesterday', and the days of the
+        week (ex: 'thursday', 'friday')  will be expanded to their respective
+        dates. Default: today's date.
 
     TIME
         Times are deliminated by '/' and can include a range to specify start and
