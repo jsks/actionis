@@ -1,7 +1,9 @@
 'use strict'
 
 const fmt = require('./fmt.js'),
-      { padStr, dateRange, today, unique } = require('./utils.js')
+      date = require('./date.js'),
+      time = require('./time.js'),
+      { padStr, unique } = require('./utils.js')
 
 // TODO: edit
 module.exports = function(log, colors) {
@@ -9,22 +11,22 @@ module.exports = function(log, colors) {
 
     // TODO: Wrap times
     function add(argTree) {
-        if (argTree.date && typeof argTree.date == 'object')
+        if (argTree.dates && argTree.dates.length != 1)
             throw 'Invalid date'
-        else if (argTree.tail.length == 0)
-            throw 'No activity submitted for command: add'
-        else if (!argTree.time.stop || !argTree.time.start)
-            throw 'Invalid time range for command: add'
+        else if (!argTree.tail)
+            throw 'No activity submitted'
+        else if (!argTree.time || !argTree.time.stop || !argTree.time.start)
+            throw 'Invalid time range'
 
-        log.add(argTree.date || today().getTime(), {
+        log.add((argTree.dates && argTree.dates[0]) || date.today().getTime(), {
             start: argTree.time.start,
             stop: argTree.time.stop,
             duration: argTree.time.stop - argTree.time.start,
             activity: argTree.tail.join(' '),
-            tags: argTree.tags
+            tags: argTree.tags || []
         })
 
-        print({ date: argTree.date || today().getTime(), tags: [] })
+        print({ dates: argTree.dates || [date.today().getTime()] })
 
         return log
     }
@@ -45,8 +47,11 @@ module.exports = function(log, colors) {
                     .join('\n'))
     }
 
-    function queue(argTree) {
-        const subcmd = (argTree.tail.length > 0) ? argTree.tail[0].toLowerCase() : ''
+    function queue({ time: start, tail = [], tags }) {
+        if (typeof start == 'object')
+            throw 'Cannot queue time range'
+
+        const subcmd = (tail.length > 0) ? tail[0].toLowerCase() : ''
 
         function print() {
             log.data.queue.forEach((n, i) => console.log(formatter.entry(n, i)))
@@ -56,7 +61,7 @@ module.exports = function(log, colors) {
             if (log.data.queue.length == 0)
                 throw 'No entries in queue'
 
-            const stop = Date.now(),
+            const stop = time.now(),
                   { start, activity, tags } = log.pop()
 
             log.add(new Date().setHours(0, 0, 0, 0), {
@@ -91,8 +96,8 @@ module.exports = function(log, colors) {
         switch (subcmd) {
             case 'pop':
                 return pop({
-                    activity: argTree.tail.slice(1).join(' '),
-                    tags: argTree.tags
+                    activity: tail.slice(1).join(' '),
+                    tags
                 })
             case 'clear':
                 return clear()
@@ -100,27 +105,29 @@ module.exports = function(log, colors) {
                 return print()
             default:
                 return add({
-                    start: argTree.time || Date.now(),
-                    activity: argTree.tail.join(' '),
-                    tags: argTree.tags
+                    start: start || time.now(),
+                    activity: tail.join(' '),
+                    tags
                 })
         }
     }
 
-    function rm({ date = today().getTime(), tail }) {
-        if (tail.length == 0 || tail.some(n => isNaN(n)))
+    function rm({ dates = [date.today().getTime()], tail }) {
+        if (dates.length > 1)
+            throw 'rm only works on a single date'
+        else if (tail.length == 0 || tail.some(n => isNaN(n)))
             throw 'Invalid index'
 
         unique(tail).sort((a, b) => a < b)
-            .forEach(n => log.rm(date, n))
+            .forEach(n => log.rm(dates[0], n))
 
-        print({ date, tags: [] })
+        print({ dates })
 
         return log
     }
 
-    function print({ date = today().getTime(), tags }) {
-        function out(d) {
+    function print({ dates = [date.today().getTime()], tags = [] }) {
+        dates.forEach(d => {
             if (log.data[d]) {
                 const e = log.data[d].filter(n => {
                     return tags.length == 0 || tags.every(t => n.tags.indexOf(t) > -1)
@@ -139,22 +146,15 @@ module.exports = function(log, colors) {
                     })
                 }
             }
-        }
-
-        if (Array.isArray(date))
-            date.forEach(out)
-        else if (typeof date == 'object')
-            dateRange(date.start, date.stop).forEach(out)
-        else
-            out(date)
+        })
     }
 
-    function summarise({ date: { start, stop = today().getTime() } } = { date: {} }) {
-        const range = (start)
-              ? dateRange(start, stop)
-              : dateRange(today().setHours(-24 * 7), today().getTime())
+    function summarise({ dates = [] } = {}) {
+        const range = (dates.length < 2)
+              ? date.range(dates[0] || date.today().setHours(-24 * 7), date.today().getTime())
+              : dates
 
-        const entries = range.filter(n => Object.keys(log.data).indexOf(n) > -1)
+        const entries = range.filter(n => log.keys().indexOf(n) > -1)
                              .map(n => log.data[n])
                              .reduce((m, n) => m.concat(n), [])
 
@@ -198,12 +198,8 @@ module.exports = function(log, colors) {
         console.log(`\n${colors.fill(f)}`)
     }
 
-    function tags({ date = '' }) {
-        const values = (date && date.start && date.stop)
-              ? dateRange(date.start, date.stop)
-              : [date.toString()]
-
-        console.log(formatter.tag(log.tags((values[0] == '') ? undefined : values)))
+    function tags({ dates }) {
+        console.log(formatter.tag(log.tags(dates)))
     }
 
     return { add, dates, help, print, queue, rm, summarise, tags }

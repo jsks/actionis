@@ -29,8 +29,24 @@ describe('Testing utils:', function() {
         expect(utils.objMap({a: 1, b: 2}, (k, v) => v + 1)).toEqual({a: 2, b: 3})
     })
 
-    it('padNum', function() {
-        expect(utils.padNum(1)).toEqual('01')
+    describe('append', function() {
+        it('to array', function() {
+            expect(utils.append([], 2)).toEqual([2])
+        })
+
+        it('invalid input', function() {
+            expect(() => utils.append(2, 2)).toThrow()
+        })
+    })
+
+    describe('padNum', function() {
+        it('1', function() {
+            expect(utils.padNum(1)).toEqual('01')
+        })
+
+        it('11', function() {
+            expect(utils.padNum(11)).toEqual('11')
+        })
     })
 
     describe('padstr', function() {
@@ -43,32 +59,4 @@ describe('Testing utils:', function() {
         })
     })
 
-    describe('dateRange', function() {
-        it('with only one date', function() {
-            expect(utils.dateRange(helpers.yesterday))
-                .toEqual([helpers.yesterday.toString(), `${helpers.today}`])
-        })
-
-        it('same date', function() {
-            expect(utils.dateRange(helpers.today)).toEqual([`${helpers.today}`])
-        })
-
-        it('with with dates', function() {
-            expect(utils.dateRange(helpers.date().setHours(-72), helpers.yesterday))
-                .toEqual([
-                    `${helpers.date().setHours(-72)}`,
-                    `${helpers.date().setHours(-48)}`,
-                    `${helpers.yesterday}`
-                ])
-        })
-    })
-
-    it('mstohrs', function() {
-        expect(utils.msToHrs(3600000)).toEqual('1.00')
-    })
-
-    // Worthless
-    it('today', function() {
-        expect(utils.today()).toEqual(helpers.date())
-    })
 })

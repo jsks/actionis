@@ -1,13 +1,15 @@
 'use strict'
 
-const { msToHrs, padNum } = require('./utils.js')
+const time = require('./time.js')
 
 module.exports = function(colors) {
     function entry({
-        start = Date.now(),
-        stop = Date.now(),
+        start = 0,
+        stop = time.now(),
         duration = stop - start,
-        activity, tags } = {}, i) {
+        activity,
+        tags
+    } = {}, i) {
         const e = [
             ((i > -1) ? colors.index(`${i + 1}`) : ''),
             timeRange(start, stop),
@@ -25,15 +27,13 @@ module.exports = function(colors) {
     }
 
     function elapsed(d) {
-        return colors.duration(`${msToHrs(d)} hrs`)
-    }
-
-    function time(d) {
-        return `${padNum(d.getHours())}.${padNum(d.getMinutes())}`
+        return colors.duration(`${time.timef(d, '%.2H')} hrs`)
     }
 
     function timeRange(start, stop) {
-        return colors.timeRange(`${time(new Date(start))}-${time(new Date(stop))} =>`)
+        const fmt = d => `${time.timef(d, '%0H.%0M')}`
+
+        return colors.timeRange(`${fmt(start)}-${fmt(stop)} =>`)
     }
 
     function tag(t = []) {

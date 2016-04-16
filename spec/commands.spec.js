@@ -13,8 +13,8 @@ describe('Checking activity commands:', function() {
 
     describe('add', function() {
         it('normal', function() {
-            const start = helpers.date().setHours(10),
-                  stop = helpers.date().setHours(13, 30)
+            const start = helpers.toMs({ hrs: 10 }),
+                  stop = helpers.toMs({ hrs: 13, mins: 30 })
 
             const args = {
                 time: {
@@ -40,17 +40,17 @@ describe('Checking activity commands:', function() {
         // Add multiple entries for 'rm' test
         for (let i = 0; i < 3; i++) {
             it('yesterday', function() {
-                const start = helpers.date().setHours(20, 23),
-                      stop = helpers.date().setHours(23, 1)
+                const start = helpers.toMs({ hrs: 20, mins: 23 }),
+                      stop = helpers.toMs({ hrs: 23, mins: 1 })
 
                 const args = {
-                    date: helpers.yesterday,
+                    dates: [helpers.yesterday],
                     time: {
                         start: start,
                         stop: stop,
                     },
                     tail: ['ran', 'into', 'the', 'woods'],
-                    tags: ['+running', '+ohno', '+dead']
+                    tags: ['+dead', '+ohno', '+running']
                 }
 
                 const obj = cmds.add(args).data[helpers.yesterday][i]
@@ -69,10 +69,7 @@ describe('Checking activity commands:', function() {
         it('invalid date', function() {
             expect(() => {
                 cmds.add({
-                    date: {
-                        start: helpers.today,
-                        stop: Date.now()
-                    }
+                    dates: [ helpers.today, Date.now() ]
                 })
             }).toThrow()
         })
@@ -80,9 +77,7 @@ describe('Checking activity commands:', function() {
         it('blank activity', function() {
             expect(() => {
                 cmds.add({
-                    date: helpers.today,
-                    time: { start: helpers.date(), stop: Date.now() },
-                    tail: []
+                    dates: [helpers.today]
                 })
             }).toThrow()
         })
@@ -90,7 +85,7 @@ describe('Checking activity commands:', function() {
         it('invalid time', function() {
             expect(() => {
                 cmds.add({
-                    date: helpers.today,
+                    dates: [helpers.today],
                     time: { start: Date.now() },
                     tail: [ 'we' ]
                 })
@@ -101,7 +96,7 @@ describe('Checking activity commands:', function() {
     describe('rm', function() {
         it('with index', function() {
             cmds.rm({
-                date: helpers.yesterday,
+                dates: [helpers.yesterday],
                 tail: ['1']
             })
             expect(log.data[helpers.yesterday].length).toEqual(2)
@@ -116,30 +111,27 @@ describe('Checking activity commands:', function() {
 
         it('w/o index', function() {
             expect(() => cmds.rm({
-                date: helpers.today
+                dates: [helpers.today]
             })).toThrow()
         })
 
         it('invalid date', function() {
             expect(() => cmds.rm({
-                date: helpers.date('3/4').getTime(),
+                dates: [helpers.date('3/4').getTime()],
                 tail: ['1']
             })).toThrow()
         })
 
         it('invalid date as range', function() {
             expect(() => cmds.rm({
-                date: {
-                    start: helpers.yesterday,
-                    stop: helpers.today
-                },
+                dates: [helpers.yesterday, helpers.today],
                 tail: ['1']
             })).toThrow()
         })
 
         it('index range', function() {
             cmds.rm({
-                date: helpers.yesterday,
+                dates: [helpers.yesterday],
                 tail: ['1', '2']
             })
             expect(log.data[helpers.yesterday]).not.toBeDefined()
@@ -148,7 +140,7 @@ describe('Checking activity commands:', function() {
 
         it('invalid index', function() {
             expect(() => cmds.rm({
-                date: helpers.today,
+                dates: [helpers.today],
                 tail: ['s']
             })).toThrow()
         })
@@ -162,7 +154,12 @@ describe('Checking activity commands:', function() {
             jasmine.clock().mockDate()
 
             cmds.queue({ tail: [], tags: [] })
-            const start = Date.now()
+            const d1 = new Date()
+            const start = helpers.toMs({
+                hrs: d1.getHours(),
+                mins: d1.getMinutes(),
+                secs: d1.getSeconds()
+            }) + d1.getMilliseconds()
 
             expect(log.data.queue[0]).toEqual(jasmine.objectContaining({
                 start: start,
@@ -174,7 +171,12 @@ describe('Checking activity commands:', function() {
             jasmine.clock().mockDate()
 
             cmds.queue({ tail: ['POP', 'running', 'away'], tags: ['+run'] })
-            const stop = Date.now()
+            const d2 = new Date()
+            const stop = helpers.toMs({
+                hrs: d2.getHours(),
+                mins: d2.getMinutes(),
+                secs: d2.getSeconds()
+            }) + d2.getMilliseconds()
 
             expect(log.data[helpers.today][0]).toEqual(jasmine.objectContaining({
                 start: start,
@@ -189,13 +191,23 @@ describe('Checking activity commands:', function() {
             jasmine.clock().mockDate()
 
             cmds.queue({ tail: ['watch', 'tv'], tags: ['+tv', '+aliens'] })
-            const start = Date.now()
+            const d1 = new Date(),
+                  start = helpers.toMs({
+                      hrs: d1.getHours(),
+                      mins: d1.getMinutes(),
+                      secs: d1.getSeconds()
+                  }) + d1.getMilliseconds()
 
             jasmine.clock().tick(5000)
             jasmine.clock().mockDate()
 
             cmds.queue({ tail: ['pop']})
-            const stop = Date.now()
+            const d2 = new Date(),
+                  stop = helpers.toMs({
+                      hrs: d2.getHours(),
+                      mins: d2.getMinutes(),
+                      secs: d2.getSeconds(),
+                  }) + d2.getMilliseconds()
 
             expect(log.data[helpers.today][0]).toEqual(jasmine.objectContaining({
                 start: start,
@@ -235,6 +247,10 @@ describe('Checking activity commands:', function() {
             cmds.queue({ tail: ['clear'] })
             expect(log.data.queue).toEqual([])
         })
+
+        it('invalid time (as range)', function() {
+            expect(() => cmds.queue({ time: { start: 1, stop: 4 }})).toThrow()
+        })
     })
 })
 
@@ -254,8 +270,9 @@ describe("Checking output commands:", function() {
     ]
 
     range.forEach(n => {
-        const start = new Date().setHours(10),
-              stop = new Date().setHours(13, 24)
+        const start = helpers.toMs({ hrs: 10 }),
+              stop = helpers.toMs({ hrs: 13, mins: 24 })
+
         log.add(n[0], {
             start: start,
             stop: stop,
@@ -290,37 +307,30 @@ describe("Checking output commands:", function() {
 
     describe('print', function() {
         it('single date', function() {
-            cmds.print({ date: helpers.today, tags: [] })
+            cmds.print({ dates: [helpers.today], tags: [] })
             expect(console.log).toHaveBeenCalledTimes(2)
         })
 
         it('date range', function() {
             cmds.print({
-                date: {
-                    start: helpers.yesterday,
-                    stop: helpers.today
-                },
+                dates: [ helpers.yesterday, helpers.today ],
                 tags: []
             })
             expect(console.log).toHaveBeenCalledTimes(4)
         })
 
         it('nonexistent date', function() {
-            cmds.print({ date: helpers.date('4/3/2008').getTime(), tags: [] })
+            cmds.print({ dates: [helpers.date('4/3/2008').getTime()], tags: [] })
             expect(console.log).not.toHaveBeenCalled()
         })
 
         it('with tags', function() {
-            cmds.print({
-                tags: ['+tv']
-            })
+            cmds.print({ tags: ['+tv'] })
             expect(console.log).toHaveBeenCalledTimes(2)
         })
 
         it('invalid tags', function() {
-            cmds.print({
-                tags: ['+nope']
-            })
+            cmds.print({ tags: ['+nope'] })
             expect(console.log).not.toHaveBeenCalled()
         })
     })
@@ -332,8 +342,8 @@ describe("Checking output commands:", function() {
         })
 
         it('excluded tags', function() {
-            const start = helpers.date('3/4/2014').setHours(12),
-                  stop = helpers.date('3/4/2014').setHours(14, 23)
+            const start = helpers.toMs({ hrs: 12 }),
+                  stop = helpers.toMs({ hrs: 14, mins: 23 })
 
             log.add(helpers.date('3/4/2014').getTime(), {
                 start: start,
@@ -348,22 +358,22 @@ describe("Checking output commands:", function() {
 
         it('empty date ranges', function() {
             expect(() => cmds.summarise({
-                date: {
-                    start: helpers.date('3/2/2012').getTime(),
-                    stop: helpers.date('4/1/2012').getTime()
-                }
+                dates: [
+                    helpers.date('3/2/2012').getTime(),
+                    helpers.date('4/1/2012').getTime()
+                ]
             })).toThrow()
         })
 
         it('missing range stop', function() {
-            cmds.summarise({ date: helpers.yesterday })
-            expect(console.log).toHaveBeenCalledTimes(9)
+            cmds.summarise({ dates: [helpers.yesterday] })
+            expect(console.log).toHaveBeenCalledTimes(7)
         })
     })
 
     describe('tags', function() {
         it('for yesterday', function() {
-            cmds.tags({ date: helpers.yesterday })
+            cmds.tags({ dates: [helpers.yesterday] })
             expect(console.log).toHaveBeenCalledTimes(1)
             expect(console.log).toHaveBeenCalledWith('+programming')
         })
@@ -376,10 +386,12 @@ describe("Checking output commands:", function() {
 
         it('for date range', function() {
             cmds.tags({
-                date: {
-                    start: helpers.date().setHours(-72),
-                    stop: helpers.today
-                }
+                dates: [
+                    helpers.date().setHours(-72),
+                    helpers.date().setHours(-48),
+                    helpers.yesterday,
+                    helpers.today
+                ]
             })
             expect(console.log).toHaveBeenCalledTimes(1)
             expect(console.log).toHaveBeenCalledWith('+programming +puppy +tv')
