@@ -1,10 +1,10 @@
 ---
 title: "Weekly Report"
 output:
-  pdf_document: default
   html_document:
     fig_caption: no
     theme: paper
+  pdf_document: default
 ---
 
 <style type="text/css">
@@ -110,12 +110,12 @@ tags.df <- data.df %>%
     na.omit
 
 comb.df <- expand.grid(tag = unique(tags.df$tag), date = ordered_days)
-tags.df <- mutate(tags.df, tag = as.factor(tag)) %>%
-    full_join(comb.df, by = c("tag", "date")) %>%
+tags.df <- mutate(comb.df, tag = as.character(tag)) %>%
+    full_join(tags.df, by = c("tag", "date")) %>%
     mutate(duration = ifelse(is.na(duration), 0, duration),
            date = factor(date, ordered_days))
 
-ggplot(tags.df, aes(date, duration, group = tag, color = tag)) +
+ggplot(tags.df, aes(date, duration, group = tag, color = factor(tag))) +
     geom_point() + geom_line() + ylim(0, 16) + coord_fixed(ratio = 0.2) +
     ggtitle("Tracked Duration by Tag") + theme(axis.title = element_blank())
 ```
