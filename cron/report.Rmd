@@ -64,7 +64,7 @@ l <- fromJSON(readLines("~/Dropbox/share/actionis-log_v2.json"))
 l$queue <- NULL
 
 data.df <- lapply(1:length(l), function(i) {
-    mutate(l[[i]], date = as.numeric(names(l)[i]) %>% convert_date %>% as.Date,
+    mutate(l[[i]], date = as.numeric(names(l)[i]) %>% convert_date %>% as.Date(., tz = ""),
                    duration = msToHrs(duration) %>% signif(digits = 3))
 }) %>% 
     bind_rows %>% 
