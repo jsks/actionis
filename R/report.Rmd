@@ -42,6 +42,7 @@ library(dplyr, warn.conflicts = F)
 library(ggplot2)
 library(jsonlite, quietly = T)
 library(rmarkdown)
+library(pander)
 options(digits.sec = 3)
 
 convert_date <- function(n) {
@@ -83,11 +84,10 @@ total_hrs <- nrow(data.df) * 15
 
 ## Top Entries
 
-```{r, echo=F}
-library(pander)
+```{r, results="asis", echo=F}
 na.omit(data.df) %>%
     arrange(desc(duration)) %>%
-    pander(style = "rmarkdown")
+    pandoc.table(style = "rmarkdown", split.tables = Inf)
 ```
 
 ## Top Tags

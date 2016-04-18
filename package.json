@@ -4,7 +4,8 @@
   "description": "cli activity log",
   "main": "lib/actionis.js",
   "bin": {
-    "actionis": "./bin/cli.js"
+    "actionis": "./bin/cli.js",
+    "actionis-report": "./bin/reporter.sh"
   },
   "dependencies": {
     "chalk": "^1.1.1"
