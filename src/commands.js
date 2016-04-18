@@ -1,11 +1,11 @@
 'use strict'
 
-const fmt = require('./fmt.js'),
+const child_process = require('child_process'),
+      fmt = require('./fmt.js'),
       date = require('./date.js'),
       time = require('./time.js'),
       { padStr, unique } = require('./utils.js')
 
-// TODO: edit
 module.exports = function(log, colors) {
     const formatter = fmt(colors)
 
@@ -47,6 +47,46 @@ module.exports = function(log, colors) {
                     .join('\n'))
     }
 
+    function edit({ dates = [date.today().getTime()], tail = []}) {
+        if (dates.length > 1)
+            throw 'Can\'t edit range of dates'
+
+        if (tail.length == 0 || !log.data[dates[0]])
+            throw 'Invalid entry'
+
+        tail.forEach(i => {
+            const index = i - 1
+
+            if (isNaN(index) || !log.data[dates[0]][index])
+                throw 'Invalid index'
+
+            const { start, stop, activity = '', tags = [], timestamp } = log.data[dates[0]][index],
+                  json = JSON.stringify({
+                      start: time.timef(start, "%H.%M.%S"),
+                      stop: time.timef(stop, "%H.%M.%S"),
+                      activity,
+                      tags
+                  }, null, 4)
+
+            const edit = JSON.parse(child_process.execFileSync("vipe", { input: json })),
+                  nstart = time.convert(edit.start),
+                  nstop = time.convert(edit.stop)
+
+            log.data[dates[0]][index] = {
+                start: nstart,
+                stop: nstop,
+                duration: nstop - nstart,
+                activity: edit.activity || '',
+                tags: edit.tags || [],
+                timestamp
+            }
+        })
+
+        print({ dates })
+
+        return log
+    }
+
     function queue({ time: start, tail = [], tags }) {
         if (typeof start == 'object')
             throw 'Cannot queue time range'
@@ -64,13 +104,15 @@ module.exports = function(log, colors) {
             const stop = time.now(),
                   { start, activity, tags } = log.pop()
 
-            log.add(new Date().setHours(0, 0, 0, 0), {
+            log.add(date.today().getTime(), {
                 start,
                 stop,
                 duration: stop - start,
                 activity: added.activity || activity,
                 tags: added.tags || tags
             })
+
+            print()
 
             return log
         }
@@ -202,5 +244,5 @@ module.exports = function(log, colors) {
         console.log(formatter.tag(log.tags(dates)))
     }
 
-    return { add, dates, help, print, queue, rm, summarise, tags }
+    return { add, dates, edit, help, print, queue, rm, summarise, tags }
 }
