@@ -18,6 +18,7 @@ function setDay(n) {
 }
 
 const table = {
+    all: 'all',
     today: date().getTime(),
     yesterday: date().setHours(-24),
     sunday: setDay(0),

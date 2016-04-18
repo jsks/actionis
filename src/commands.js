@@ -168,8 +168,10 @@ module.exports = function(log, colors) {
         return log
     }
 
-    function print({ dates = [date.today().getTime()], tags = [] }) {
-        dates.forEach(d => {
+    function print({ dates = [date.today().getTime()], tags = [] } = {}) {
+        const keys = (dates.indexOf('all') > -1) ? log.keys() : dates
+
+        keys.forEach(d => {
             if (log.data[d]) {
                 const e = log.data[d].filter(n => {
                     return tags.length == 0 || tags.every(t => n.tags.indexOf(t) > -1)
@@ -197,24 +199,24 @@ module.exports = function(log, colors) {
               : dates
 
         const entries = range.filter(n => log.keys().indexOf(n) > -1)
-                             .map(n => log.data[n])
+                             .map(n => log.data[n].map(e => { e.date = n; return e }))
                              .reduce((m, n) => m.concat(n), [])
 
         if (entries.length == 0)
             throw 'No entries for the last week'
 
         console.log(colors.title('Top 5 entries:'))
-        entries.sort((a, b) => a.duration < b.duration)
-            .slice(0, 5)
-            .forEach((n, i) => {
-                const opts = {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short'
-                }
+        entries.sort((a, b) => b.duration - a.duration)
+               .slice(0, 5)
+               .forEach((n, i) => {
+                   const opts = {
+                       weekday: 'short',
+                       day: 'numeric',
+                       month: 'short'
+                   }
 
-                console.log(`${formatter.date(n.start, opts)} ${formatter.entry(n, i)}`)
-            })
+                   console.log(`${formatter.date(n.date, opts)} ${formatter.entry(n, i)}`)
+               })
 
         console.log(colors.title('\nBy Tag:'))
         const tags = log.tags().reduce((m, t) => {
@@ -228,11 +230,11 @@ module.exports = function(log, colors) {
         }, {})
 
         Object.keys(tags).sort((a, b) => tags[a] < tags[b])
-            .forEach(n => console.log(`${colors.tag(n)} ${formatter.elapsed(tags[n])}`))
+              .forEach(n => console.log(`${colors.tag(n)} ${formatter.elapsed(tags[n])}`))
 
         const f = [
-            `\nTotal hrs: ${formatter.elapsed(entries.reduce((m, n) =>
-                                                             m + n.duration, 0))}`,
+            `Total hrs: ${formatter.elapsed(entries.reduce((m, n) =>
+                                                           m + n.duration, 0))}`,
             `Tags: ${colors.tag(log.tags().length)}`,
             `Entries: ${colors.action(entries.length)}`
         ].join(' ')
