@@ -1,3 +1,5 @@
+'use strict'
+
 module.exports = {
     clone: obj => JSON.parse(JSON.stringify(obj)),
     date: date,
@@ -41,8 +43,14 @@ function toMs(obj) {
 }
 
 function setDay(day) {
-    const d = date(),
-          today = d.getDay()
+    const d = date()
 
-    return d.setDate(d.getDate() - (today - ((today >= day) ? day : today - day)))
+    for (let i = 0; i <= 6; i++) {
+        if (d.getDay() == day)
+            return d.getTime()
+
+        d.setDate(d.getDate() - 1)
+    }
+
+    throw new Error(`Unable to find day: ${day}`)
 }
