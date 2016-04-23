@@ -1,6 +1,6 @@
 'use strict'
 
-const child_process = require('child_process'),
+const execFileSync = require('child_process').execFileSync,
       fmt = require('./fmt.js'),
       date = require('./date.js'),
       time = require('./time.js'),
@@ -47,7 +47,7 @@ module.exports = function(log, colors) {
                     .join('\n'))
     }
 
-    function edit({ dates = [date.today().getTime()], tail = []}) {
+    function edit({ dates = [date.today().getTime()], tail = [] }) {
         if (dates.length > 1)
             throw 'Can\'t edit range of dates'
 
@@ -62,13 +62,13 @@ module.exports = function(log, colors) {
 
             const { start, stop, activity = '', tags = [], timestamp } = log.data[dates[0]][index],
                   json = JSON.stringify({
-                      start: time.timef(start, "%H.%M.%S"),
-                      stop: time.timef(stop, "%H.%M.%S"),
+                      start: time.timef(start, '%H.%M.%S'),
+                      stop: time.timef(stop, '%H.%M.%S'),
                       activity,
                       tags
                   }, null, 4)
 
-            const edit = JSON.parse(child_process.execFileSync("vipe", { input: json })),
+            const edit = JSON.parse(execFileSync('vipe', { input: json })),
                   nstart = time.convert(edit.start),
                   nstop = time.convert(edit.stop)
 
@@ -194,16 +194,17 @@ module.exports = function(log, colors) {
     }
 
     function summarise({ dates = [] } = {}) {
-        const range = (dates.length < 2)
-              ? date.range(dates[0] || date.today().setHours(-24 * 7), date.today().getTime())
-              : dates
+        const keys = (dates.indexOf('all') > -1) ? log.keys() : dates,
+              range = (keys.length < 2)
+                  ? date.range(keys[0] || date.today().setHours(-24 * 7), date.today().getTime())
+                  : keys
 
         const entries = range.filter(n => log.keys().indexOf(n) > -1)
-                             .map(n => log.data[n].map(e => { e.date = n; return e }))
+                             .map(n => log.data[n].map(e => ({ ...e, date: n })))
                              .reduce((m, n) => m.concat(n), [])
 
         if (entries.length == 0)
-            throw 'No entries for the last week'
+            throw 'No entries for specified range'
 
         console.log(colors.title('Top 5 entries:'))
         entries.sort((a, b) => b.duration - a.duration)
@@ -243,7 +244,9 @@ module.exports = function(log, colors) {
     }
 
     function tags({ dates }) {
-        console.log(formatter.tag(log.tags(dates)))
+        console.log(formatter.tag(log.tags((dates || []).indexOf('all') > -1
+                                           ? log.keys()
+                                           : dates)))
     }
 
     return { add, dates, edit, help, print, queue, rm, summarise, tags }
