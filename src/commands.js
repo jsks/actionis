@@ -11,7 +11,7 @@ module.exports = function(log, colors) {
 
     // TODO: Wrap times
     function add(argTree) {
-        if (argTree.dates && argTree.dates.length != 1)
+        if (argTree.dates && (argTree.dates.length != 1 || argTree.dates == ['all']))
             throw 'Invalid date'
         else if (!argTree.tail)
             throw 'No activity submitted'
