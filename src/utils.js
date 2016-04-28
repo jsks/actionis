@@ -1,25 +1,16 @@
 'use strict'
 
-const os = require('os'),
-      fs = require('fs')
+const os = require('os')
 
 module.exports = {
+    between,
     padNum,
     padStr: { left, right },
     untildify,
     flatten,
     unique,
     append,
-    objMap,
-    isFile
-}
-
-function isFile(file) {
-    try {
-        return fs.lstatSync(file).isFile()
-    } catch (e) {
-        return false
-    }
+    objMap
 }
 
 function untildify(path) {
@@ -47,6 +38,10 @@ function objMap(obj, fn) {
 
         return m
     }, {})
+}
+
+function between(n, a, b) {
+    return a <= n && n <= b
 }
 
 function padNum(n) {

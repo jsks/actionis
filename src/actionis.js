@@ -4,12 +4,19 @@ const fs = require('fs'),
       log = require('./log.js'),
       commands = require('./commands.js'),
       config = require('./config.js'),
-      parse = require('./parse.js'),
-      { isFile } = require('./utils.js')
+      parse = require('./parse.js')
 
 function error(msg) {
     console.error(msg)
     process.exit(1)
+}
+
+function isFile(file) {
+    try {
+        return fs.lstatSync(file).isFile()
+    } catch (e) {
+        return false
+    }
 }
 
 module.exports = function(args) {
@@ -30,7 +37,7 @@ module.exports = function(args) {
         if (!cmd) {
             console.log(Object.keys(fns).sort().join(' '))
             process.exit(0)
-        } else if (!fns)
+        } else if (!fns[cmd])
             error('Invalid command')
 
         const out = fns[cmd](argTree)
