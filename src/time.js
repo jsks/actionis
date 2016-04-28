@@ -1,18 +1,14 @@
 'use strict'
 
-const { padNum } = require('./utils.js')
+const { padNum, between } = require('./utils.js')
 
-module.exports = { convert, timef, now }
+module.exports = { convert, timef, get now() { return now() } }
 
 const table = {
     H: 60 * 60 * 1000,
     M: 60 * 1000,
     S: 1000,
     MS: 1
-}
-
-function between(n, a, b) {
-    return a <= n && n <= b
 }
 
 function toMs(hrs, mins, secs, ms) {
@@ -32,7 +28,7 @@ function convert(str) {
     const [hrs, mins = 0, secs = 0, ms = 0] = str.split(/[.]|:/).map(Number)
 
     if (!between(hrs, 0, 24) || !between(mins, 0, 60) || !between(secs, 0, 60)
-        || !between(ms, 0, 1000))
+        || !between(ms, 0, 1000) || (hrs == 24 && (mins > 0 || secs > 0 || ms > 0)))
         throw 'Invalid time string'
 
     return toMs(hrs, mins, secs, ms)

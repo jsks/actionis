@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = { convert, range, today: date }
+module.exports = { convert, range, get today() { return date() } }
 
 function date(str) {
     const d = (str) ? new Date(str) : new Date()

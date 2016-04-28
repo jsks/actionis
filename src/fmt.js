@@ -5,7 +5,7 @@ const time = require('./time.js')
 module.exports = function(colors) {
     function entry({
         start = 0,
-        stop = time.now(),
+        stop = time.now,
         duration = stop - start,
         activity,
         tags

@@ -10,7 +10,7 @@ module.exports = function(log, colors) {
     const formatter = fmt(colors)
 
     function add({
-        dates = [date.today().getTime()],
+        dates = [date.today.getTime()],
         time,
         tail,
         tags = []
@@ -59,7 +59,7 @@ module.exports = function(log, colors) {
                     .join('\n'))
     }
 
-    function edit({ dates = [date.today().getTime()], tail = [] }) {
+    function edit({ dates = [date.today.getTime()], tail = [] }) {
         if (dates.length > 1)
             throw 'Can\'t edit range of dates'
 
@@ -113,8 +113,8 @@ module.exports = function(log, colors) {
             if (log.data.queue.length == 0)
                 throw 'No entries in queue'
 
-            const stop = added.stop || time.now(),
-                  dateStop = date.today().getTime(),
+            const stop = added.stop || time.now,
+                  dateStop = date.today.getTime(),
                   { dateStart, start, activity, tags } = log.pop()
 
             date.range(dateStart, dateStop).forEach((n, i, a) => {
@@ -145,7 +145,7 @@ module.exports = function(log, colors) {
 
         function push({ start, activity, tags }) {
             log.add('queue', {
-                dateStart: date.today().getTime(),
+                dateStart: date.today.getTime(),
                 start,
                 activity,
                 tags
@@ -167,14 +167,14 @@ module.exports = function(log, colors) {
                 return print()
             default:
                 return push({
-                    start: mark || time.now(),
+                    start: mark || time.now,
                     activity: tail.join(' '),
                     tags
                 })
         }
     }
 
-    function rm({ dates = [date.today().getTime()], tail }) {
+    function rm({ dates = [date.today.getTime()], tail }) {
         if (dates.length > 1)
             throw 'rm only works on a single date'
         else if (tail.length == 0 || tail.some(n => isNaN(n)))
@@ -188,7 +188,7 @@ module.exports = function(log, colors) {
         return log
     }
 
-    function print({ dates = [date.today().getTime()], tags = [] } = {}) {
+    function print({ dates = [date.today.getTime()], tags = [] } = {}) {
         const keys = (dates.indexOf('all') > -1) ? log.keys() : dates
 
         keys.forEach(d => {
@@ -216,7 +216,7 @@ module.exports = function(log, colors) {
     function summarise({ dates = [] } = {}) {
         const keys = (dates.indexOf('all') > -1) ? log.keys() : dates,
               range = (keys.length < 2)
-                  ? date.range(keys[0] || date.today().setHours(-24 * 7), date.today().getTime())
+                  ? date.range(keys[0] || date.today.setHours(-24 * 7), date.today.getTime())
                   : keys
 
         const entries = range.filter(n => log.keys().indexOf(n) > -1)
