@@ -9,24 +9,36 @@ const execFileSync = require('child_process').execFileSync,
 module.exports = function(log, colors) {
     const formatter = fmt(colors)
 
-    // TODO: Wrap times
-    function add(argTree) {
-        if (argTree.dates && (argTree.dates.length != 1 || argTree.dates == ['all']))
+    function add({
+        dates = [date.today().getTime()],
+        time,
+        tail,
+        tags = []
+    }) {
+        if (dates == ['all'])
             throw 'Invalid date'
-        else if (!argTree.tail)
+        else if (!tail)
             throw 'No activity submitted'
-        else if (!argTree.time || !argTree.time.stop || !argTree.time.start)
+        else if (!time || !time.stop || !time.start)
             throw 'Invalid time range'
 
-        log.add((argTree.dates && argTree.dates[0]) || date.today().getTime(), {
-            start: argTree.time.start,
-            stop: argTree.time.stop,
-            duration: argTree.time.stop - argTree.time.start,
-            activity: argTree.tail.join(' '),
-            tags: argTree.tags || []
+        if (dates.length == 1 && time.stop < time.start)
+            dates.push(dates[1] + time.convert('24'))
+
+        dates.forEach((n, i, a) => {
+            const start = (i == 0) ? time.start : 0,
+                  stop = (i == a.length - 1) ? time.stop : time.convert('24')
+
+            log.add(n, {
+                start,
+                stop,
+                duration: stop - start,
+                activity: tail.join(' '),
+                tags
+            })
         })
 
-        print({ dates: argTree.dates || [date.today().getTime()] })
+        print({ dates })
 
         return log
     }
@@ -102,14 +114,20 @@ module.exports = function(log, colors) {
                 throw 'No entries in queue'
 
             const stop = time.now(),
-                  { start, activity, tags } = log.pop()
+                  dateStop = date.today().getTime(),
+                  { dateStart, start, activity, tags } = log.pop()
 
-            log.add(date.today().getTime(), {
-                start,
-                stop,
-                duration: stop - start,
-                activity: added.activity || activity,
-                tags: added.tags || tags
+            date.range(dateStart, dateStop).forEach((n, i, a) => {
+                const timeStart = (i == 0) ? start : 0,
+                      timeStop = (i == a.length - 1) ? stop : time.convert('24')
+
+                log.add(n, {
+                    start: timeStart,
+                    stop: timeStop,
+                    duration: timeStop - timeStart,
+                    activity: added.activity || activity,
+                    tags: added.tags || tags
+                })
             })
 
             print()
@@ -125,8 +143,9 @@ module.exports = function(log, colors) {
             return log
         }
 
-        function add({ start, activity, tags }) {
+        function push({ start, activity, tags }) {
             log.add('queue', {
+                dateStart: date.today().getTime(),
                 start,
                 activity,
                 tags
@@ -146,7 +165,7 @@ module.exports = function(log, colors) {
             case 'print':
                 return print()
             default:
-                return add({
+                return push({
                     start: start || time.now(),
                     activity: tail.join(' '),
                     tags
