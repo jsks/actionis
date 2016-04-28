@@ -99,8 +99,8 @@ module.exports = function(log, colors) {
         return log
     }
 
-    function queue({ time: start, tail = [], tags }) {
-        if (typeof start == 'object')
+    function queue({ time: mark, tail = [], tags }) {
+        if (typeof mark == 'object')
             throw 'Cannot queue time range'
 
         const subcmd = (tail.length > 0) ? tail[0].toLowerCase() : ''
@@ -113,7 +113,7 @@ module.exports = function(log, colors) {
             if (log.data.queue.length == 0)
                 throw 'No entries in queue'
 
-            const stop = time.now(),
+            const stop = added.stop || time.now(),
                   dateStop = date.today().getTime(),
                   { dateStart, start, activity, tags } = log.pop()
 
@@ -157,6 +157,7 @@ module.exports = function(log, colors) {
         switch (subcmd) {
             case 'pop':
                 return pop({
+                    stop: mark,
                     activity: tail.slice(1).join(' '),
                     tags
                 })
@@ -166,7 +167,7 @@ module.exports = function(log, colors) {
                 return print()
             default:
                 return push({
-                    start: start || time.now(),
+                    start: mark || time.now(),
                     activity: tail.join(' '),
                     tags
                 })
