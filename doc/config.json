@@ -1,0 +1,15 @@
+{
+    "jsonFile": "~/actionis-log.json",
+    "editCmd": "vipe",
+    "colors": {
+        "index": "blue",
+        "timeRange": "white",
+        "duration": "red",
+        "activity": "yellow",
+        "tag": "cyan",
+        "title": "magenta",
+        "date": "green",
+        "fill": "white"
+    }
+}
+

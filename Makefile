@@ -11,8 +11,9 @@ lib/%.js: src/%.js
 
 clean:
 	@rm -rf lib/
+	@rm -rf coverage/
 
-lint: 
+lint:
 	@eslint $(src_files)
 
 test: $(lib_files)

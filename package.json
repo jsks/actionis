@@ -2,7 +2,15 @@
   "name": "actionis",
   "version": "0.3.0",
   "description": "cli activity log",
-  "main": "lib/actionis.js",
+  "author": "jsks",
+  "private": true,
+  "preferGlobal": true,
+  "files": [
+    "R",
+    "bin",
+    "lib",
+    "help.txt"
+  ],
   "bin": {
     "actionis": "./bin/cli.js",
     "actionis-report": "./bin/reporter.sh"
@@ -18,6 +26,5 @@
     "type": "git",
     "url": "git+ssh://git@github.com/jsks/actionis.git"
   },
-  "author": "jsks",
   "license": "MIT"
 }
