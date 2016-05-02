@@ -3,16 +3,6 @@ const utils = require('../lib/utils.js'),
       os = require('os')
 
 describe('Testing utils:', function() {
-    describe('isFile', function() {
-        it('with actual file', function() {
-            expect(utils.isFile(`${__dirname}/helpers.js`)).toBe(true)
-        })
-
-        it('with nonexistent file', function() {
-            expect(utils.isFile('./sdflkjasdf.sdflkjsdf')).toBe(false)
-        })
-    })
-
     it('untildify', function() {
         expect(utils.untildify('~/hello.txt')).toEqual(`${os.homedir()}/hello.txt`)
     })
@@ -36,6 +26,16 @@ describe('Testing utils:', function() {
 
         it('invalid input', function() {
             expect(() => utils.append(2, 2)).toThrow()
+        })
+    })
+
+    describe('between', function() {
+        it('true', function() {
+            expect(utils.between(2, 1, 3)).toEqual(true)
+        })
+
+        it('false', function() {
+            expect(utils.between(1, 34, 35)).toEqual(false)
         })
     })
 

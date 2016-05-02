@@ -74,5 +74,5 @@ describe('convert', function() {
 
 // Worthless
 it('today', function() {
-    expect(date.today()).toEqual(helpers.date())
+    expect(date.today).toEqual(helpers.date())
 })

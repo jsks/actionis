@@ -6,8 +6,8 @@ const execFileSync = require('child_process').execFileSync,
       time = require('./time.js'),
       { padStr, unique } = require('./utils.js')
 
-module.exports = function(log, colors) {
-    const formatter = fmt(colors)
+module.exports = function(log, config) {
+    const formatter = fmt(config.colors)
 
     function add({
         dates = [date.today.getTime()],
@@ -80,7 +80,7 @@ module.exports = function(log, colors) {
                       tags
                   }, null, 4)
 
-            const edit = JSON.parse(execFileSync('vipe', { input: json })),
+            const edit = JSON.parse(execFileSync(config.editCmd, { input: json })),
                   nstart = time.convert(edit.start),
                   nstop = time.convert(edit.stop)
 
@@ -188,6 +188,7 @@ module.exports = function(log, colors) {
         return log
     }
 
+    // Allow sorting by time
     function print({ dates = [date.today.getTime()], tags = [] } = {}) {
         const keys = (dates.indexOf('all') > -1) ? log.keys() : dates
 
@@ -226,7 +227,7 @@ module.exports = function(log, colors) {
         if (entries.length == 0)
             throw 'No entries for specified range'
 
-        console.log(colors.title('Top 5 entries:'))
+        console.log(config.colors.title('Top 5 entries:'))
         entries.sort((a, b) => b.duration - a.duration)
                .slice(0, 5)
                .forEach((n, i) => {
@@ -239,7 +240,7 @@ module.exports = function(log, colors) {
                    console.log(`${formatter.date(n.date, opts)} ${formatter.entry(n, i)}`)
                })
 
-        console.log(colors.title('\nBy Tag:'))
+        console.log(config.colors.title('\nBy Tag:'))
         const tags = log.tags().reduce((m, t) => {
             const e = entries.filter(n => n.tags.indexOf(t) > -1)
                              .reduce((m, n) => m + n.duration, 0)
@@ -251,18 +252,19 @@ module.exports = function(log, colors) {
         }, {})
 
         Object.keys(tags).sort((a, b) => tags[a] < tags[b])
-              .forEach(n => console.log(`${colors.tag(n)} ${formatter.elapsed(tags[n])}`))
+              .forEach(n => console.log(`${config.colors.tag(n)} ${formatter.elapsed(tags[n])}`))
 
         const f = [
             `Total hrs: ${formatter.elapsed(entries.reduce((m, n) =>
                                                            m + n.duration, 0))}`,
-            `Tags: ${colors.tag(log.tags().length)}`,
-            `Entries: ${colors.action(entries.length)}`
+            `Tags: ${config.colors.tag(log.tags().length)}`,
+            `Entries: ${config.colors.action(entries.length)}`
         ].join(' ')
 
-        console.log(`\n${colors.fill(f)}`)
+        console.log(`\n${config.colors.fill(f)}`)
     }
 
+    // Sorting by time?
     function tags({ dates }) {
         console.log(formatter.tag(log.tags((dates || []).indexOf('all') > -1
                                            ? log.keys()

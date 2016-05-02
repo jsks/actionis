@@ -32,7 +32,7 @@ module.exports = function(args) {
             throw 'Log file not found!'
 
         const data = JSON.parse(fs.readFileSync(configData.jsonFile)),
-              fns = commands(log(data), configData.colors)
+              fns = commands(log(data), configData)
 
         if (!cmd) {
             console.log(Object.keys(fns).sort().join(' '))

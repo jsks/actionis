@@ -17,6 +17,18 @@ describe('time', function() {
             expect(() => time.convert()).toThrow()
         })
 
+        it('24 hours over min', function() {
+            expect(() => time.convert('24.12')).toThrow()
+        })
+
+        it('24 hours over sec', function() {
+            expect(() => time.convert('24.0.23')).toThrow()
+        })
+
+        it('24 hours over ms', function() {
+            expect(() => time.convert('24.0.0.23')).toThrow()
+        })
+
         it('with only an hour given', function() {
             expect(time.convert('11')).toEqual(helpers.toMs({ hrs: 11 }))
         })
@@ -47,7 +59,7 @@ describe('time', function() {
         jasmine.clock().install()
         const d = new Date()
 
-        expect(time.now()).toEqual(helpers.toMs({
+        expect(time.now).toEqual(helpers.toMs({
             hrs: d.getHours(),
             mins: d.getMinutes(),
             secs: d.getSeconds()
