@@ -9,9 +9,9 @@
     "R",
     "bin",
     "lib",
-    "doc/config.json",
-    "help.txt"
+    "doc/config.json"
   ],
+  "man": "./doc/actionis.1",
   "bin": {
     "actionis": "./bin/cli.js",
     "actionis-report": "./bin/reporter.sh"

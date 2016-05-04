@@ -1,9 +1,14 @@
 src_files := $(wildcard src/*.js)
 lib_files := $(src_files:src/%.js=lib/%.js)
+config    := doc/config.json
+man				:= doc/actionis.1
 
 .PHONY: all check clean lint test
 
-all: $(lib_files) doc/config.json
+all: $(lib_files) $(config) $(man)
+
+doc/%.1: doc/%.1.md
+	pandoc $< -S -s -t man -o $@
 
 doc/%.json: doc/%.cjson
 	@echo "Generating $@..."
@@ -17,7 +22,7 @@ check:
 	@npm outdated
 
 clean:
-	@rm -rf lib/ coverage/ doc/config.json
+	@rm -rf lib/ coverage/ doc/*.{json,1}
 
 lint:
 	@eslint $(src_files)
