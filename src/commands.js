@@ -23,7 +23,7 @@ module.exports = function(log, config) {
             throw 'Invalid time range'
 
         if (dates.length == 1 && time.stop < time.start)
-            dates.push(dates[1] + time.convert('24'))
+            dates.push(dates[0] + time.convert('24'))
 
         dates.forEach((n, i, a) => {
             const start = (i == 0) ? time.start : 0,
@@ -106,7 +106,40 @@ module.exports = function(log, config) {
         const subcmd = (tail.length > 0) ? tail[0].toLowerCase() : ''
 
         function print() {
-            log.data.queue.forEach((n, i) => console.log(formatter.entry(n, i)))
+            const opts = {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short'
+            }
+
+            log.data.queue.forEach((n, i) => {
+                console.log(`Queue [${i+1}]`)
+
+                const dates = date.range(n.dateStart, date.today.getTime()),
+                      timeStop = time.now
+
+                dates.forEach((d, i, a) => {
+                    console.log(formatter.date(d, opts))
+                    const start = (i == 0) ? n.start : 0,
+                          stop = (i == a.length - 1) ? timeStop : time.convert('24')
+
+                    console.log(formatter.entry({
+                        start,
+                        stop,
+                        duration: stop - start,
+                        activity: n.activity,
+                        tags: n.tags
+                    }))
+                })
+
+                if (dates.length > 1) {
+                    const total = (24 - Number(time.timef(n.start, '%.2H')))
+                          + Number(time.timef(timeStop, '%.2H'))
+                          + ((dates.length > 2) ? 24 * (dates.length - 2) : 0)
+                    console.log(`Total hrs: ${total.toFixed(2)}`)
+                }
+            })
+
         }
 
         function pop(added) {
