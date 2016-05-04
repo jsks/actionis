@@ -28,10 +28,10 @@ module.exports = function(args) {
                                        ? JSON.parse(fs.readFileSync(configFile))
                                        : undefined)
 
-        if (!isFile(configData.jsonFile))
+        if (!isFile(configData.logFile))
             throw 'Log file not found!'
 
-        const data = JSON.parse(fs.readFileSync(configData.jsonFile)),
+        const data = JSON.parse(fs.readFileSync(configData.logFile)),
               fns = commands(log(data), configData)
 
         if (!cmd) {
@@ -43,7 +43,7 @@ module.exports = function(args) {
         const out = fns[cmd](argTree)
 
         if (out)
-            fs.writeFileSync(configData.jsonFile, JSON.stringify(out.data) + '\n')
+            fs.writeFileSync(configData.logFile, JSON.stringify(out.data) + '\n')
     } catch (e) {
         if (e instanceof Error)
             throw e

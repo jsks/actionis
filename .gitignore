@@ -1,4 +1,6 @@
+*.tgz
 npm-debug.log
+doc/config.json
 coverage
 lib
 node_modules

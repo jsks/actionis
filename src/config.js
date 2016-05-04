@@ -16,7 +16,7 @@ function parseCliArgs(args) {
     }
 }
 
-function load({ colors = {}, jsonFile, editCmd = 'vipe' } = {}) {
+function load({ colors = {}, logFile, editCmd = 'vipe' } = {}) {
     const defaultColors = {
         title: chalk.magenta.bold,
         date: chalk.green,
@@ -36,7 +36,7 @@ function load({ colors = {}, jsonFile, editCmd = 'vipe' } = {}) {
 
     return {
         colors: colorsMerged,
-        jsonFile: untildify(jsonFile || '~/.config/actionis/log.json'),
+        logFile: untildify(logFile || '~/.config/actionis/log.json'),
         editCmd
     }
 }

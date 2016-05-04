@@ -1,0 +1,24 @@
+// Example commented json config file. Strip comments and save resulting json
+// as ~/.config/actionis/config.json. Or, save in alternative folder and
+// specify the location using the cli option, '-c'.
+
+{
+    // Relative paths acceptable for location of log file.
+    "logFile": "~/actionis-log.json",
+
+    // External command used to edit entries. Must be capable of reading from
+    // stdin and writing to stdout.
+    "editCmd": "vipe",
+
+    // Colors for output. Values are set to corresponding chalk functions.
+    "colors": {
+        "index": "blue",
+        "timeRange": "white",
+        "duration": "red",
+        "activity": "yellow",
+        "tag": "cyan",
+        "title": "magenta",
+        "date": "green",
+        "fill": "white"
+    }
+}
