@@ -15,7 +15,7 @@ module.exports = function(log, config) {
         tail,
         tags = []
     }) {
-        if (dates == ['all'])
+        if (dates.indexOf('all') > -1)
             throw 'Invalid date'
         else if (!tail)
             throw 'No activity submitted'
