@@ -44,7 +44,7 @@ module.exports = function(log, config) {
     }
 
     function help() {
-        console.log(require('fs').readFileSync(`${__dirname}/../help.txt`, 'utf-8'))
+        console.log('USAGE: actionis cmd [@date] [/time/] [activity|index] [+tags]')
     }
 
     function dates() {
