@@ -9,4 +9,4 @@ if [[ -z $1 ]]; then
     exit 1
 fi
 
-Rscript -e "rmarkdown::render(\"${0:A:h}/../R/report.Rmd\", output_file=\"$1\", intermediates_dir=\"/tmp\", quiet=T)"
+Rscript -e "rmarkdown::render(\"${0:A:h}/../R/report.Rmd\", output_file=\"$1\", quiet=T)"

@@ -79,7 +79,7 @@ data.df <- lapply(1:length(l), function(i) {
 
 tags <- unlist(data.df$tags) %>% unique
 hrs <- sum(data.df$duration)
-total_hrs <- nrow(data.df) * 15
+total_hrs <- unique(data.df$date) %>% length * 15
 ```
 
 ## Top Entries
@@ -87,6 +87,7 @@ total_hrs <- nrow(data.df) * 15
 ```{r, results="asis", echo=F}
 na.omit(data.df) %>%
     arrange(desc(duration)) %>%
+    slice(1:10) %>%
     pandoc.table(style = "rmarkdown", split.tables = Inf)
 ```
 
@@ -107,7 +108,9 @@ tags.df <- data.df %>%
     }) %>% 
     ungroup %>%
     rename(tag = tags) %>%
-    na.omit
+    na.omit %>%
+    group_by(date, tag) %>%
+    summarise(duration = sum(duration))
 
 comb.df <- expand.grid(tag = unique(tags.df$tag), date = ordered_days)
 tags.df <- mutate(comb.df, tag = as.character(tag)) %>%
@@ -137,7 +140,7 @@ ggplot(tags_totals.df, aes("", total, fill = tag)) +
           axis.text = element_blank(), axis.ticks = element_blank())
 ```
 
-`r pander(tail(tags_totals.df, 5))`
+`r pander(head(tags_totals.df, 5))`
 </div>
 
 ## Summary { .summary }
