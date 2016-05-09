@@ -58,22 +58,22 @@ describe('Parse components:', function() {
     describe('time', function() {
         it('10.00', function() {
             const o = parse('add /10.00/')
-            expect(o.time).toEqual(helpers.toMs({ hrs: 10 }))
+            expect(o.times).toEqual(helpers.toMs({ hrs: 10 }))
         })
 
         it('14.23', function() {
             const o = parse('add /14.23/')
-            expect(o.time).toEqual(helpers.toMs({ hrs: 14, mins: 23 }))
+            expect(o.times).toEqual(helpers.toMs({ hrs: 14, mins: 23 }))
         })
 
         it('7', function() {
             const o = parse('add /7/')
-            expect(o.time).toEqual(helpers.toMs({ hrs: 7 }))
+            expect(o.times).toEqual(helpers.toMs({ hrs: 7 }))
         })
 
         it('range 8.23 - 8.56', function() {
             const o = parse('add /8.23 - 8.56/')
-            expect(o.time).toEqual({
+            expect(o.times).toEqual({
                 start: helpers.toMs({ hrs: 8, mins: 23 }),
                 stop: helpers.toMs({ hrs: 8, mins: 56 })
             })
@@ -81,7 +81,7 @@ describe('Parse components:', function() {
 
         it('range 13.35-15.00', function() {
             const o = parse('add /13.35-15.00/')
-            expect(o.time).toEqual({
+            expect(o.times).toEqual({
                 start: helpers.toMs({ hrs: 13, mins: 35 }),
                 stop: helpers.toMs({ hrs: 15 })
             })
@@ -114,7 +114,7 @@ describe('parse full strings:', function() {
         expect(parse('add @today watched tv +tv /10.00 - 11.30/')).toEqual({
             cmd: 'add',
             dates: [helpers.today],
-            time: {
+            times: {
                 start: helpers.toMs({ hrs: 10 }),
                 stop: helpers.toMs({ hrs: 11, mins: 30 })
             },

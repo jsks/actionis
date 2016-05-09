@@ -9,7 +9,7 @@ describe('Checking activity commands:', function() {
     beforeEach(() => spyOn(console, 'log'))
 
     const log = activity(),
-          cmds = commands(log, helpers.colors)
+          cmds = commands(log, { colors: helpers.colors })
 
     describe('add', function() {
         it('normal', function() {
@@ -17,7 +17,7 @@ describe('Checking activity commands:', function() {
                   stop = helpers.toMs({ hrs: 13, mins: 30 })
 
             const args = {
-                time: {
+                times: {
                     start: start,
                     stop: stop
                 },
@@ -45,7 +45,7 @@ describe('Checking activity commands:', function() {
 
                 const args = {
                     dates: [helpers.yesterday],
-                    time: {
+                    times: {
                         start: start,
                         stop: stop,
                     },
@@ -86,7 +86,7 @@ describe('Checking activity commands:', function() {
             expect(() => {
                 cmds.add({
                     dates: [helpers.today],
-                    time: { start: Date.now() },
+                    times: { start: Date.now() },
                     tail: [ 'we' ]
                 })
             }).toThrow()
@@ -220,7 +220,7 @@ describe('Checking activity commands:', function() {
 
         it('add & clear', function() {
             cmds.queue({
-                time: helpers.date().setHours(12, 31),
+                times: helpers.date().setHours(12, 31),
                 tail: ['running', 'away' ],
                 tags: ['+run']
             })
@@ -249,14 +249,14 @@ describe('Checking activity commands:', function() {
         })
 
         it('invalid time (as range)', function() {
-            expect(() => cmds.queue({ time: { start: 1, stop: 4 }})).toThrow()
+            expect(() => cmds.queue({ times: { start: 1, stop: 4 }})).toThrow()
         })
     })
 })
 
 describe("Checking output commands:", function() {
     const log = activity({}),
-          cmds = commands(log, helpers.colors)
+          cmds = commands(log, { colors: helpers.colors })
 
     beforeEach(() => {
         spyOn(console, 'log')
@@ -277,6 +277,7 @@ describe("Checking output commands:", function() {
             start: start,
             stop: stop,
             duration: stop - start,
+            dateStart: helpers.date().getTime(),
             activity: 'programming actionis with a puppy in my lap',
             tags: [n[1]]
         })
@@ -295,7 +296,7 @@ describe("Checking output commands:", function() {
     describe('queue', function() {
         it('output', function() {
             cmds.queue({ tail: ['print'] })
-            expect(console.log).toHaveBeenCalledTimes(1)
+            expect(console.log).toHaveBeenCalledTimes(3)
         })
 
         it('blank', function() {

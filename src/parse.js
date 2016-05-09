@@ -15,7 +15,7 @@ module.exports = function(str) {
             return tree
 
         if (/^\/\d{1,2}(.\d{2})?(\s*-\s*\d{1,2}(.\d{2})?)?\/$/.test(token.value))
-            tree.time = parseTimes(token.value.slice(1, token.value.length - 1))
+            tree.times = parseTimes(token.value.slice(1, token.value.length - 1))
         else if (token.value.charAt(0) == '@')
             tree.dates = append(tree.dates, parseDates(token.value.slice(1)))
         else if (token.value.charAt(0) == '+')

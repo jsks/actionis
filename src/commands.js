@@ -11,7 +11,7 @@ module.exports = function(log, config) {
 
     function add({
         dates = [date.today.getTime()],
-        time,
+        times,
         tail,
         tags = []
     }) {
@@ -19,15 +19,15 @@ module.exports = function(log, config) {
             throw 'Invalid date'
         else if (!tail)
             throw 'No activity submitted'
-        else if (!time || !time.stop || !time.start)
+        else if (!times || !times.stop || !times.start)
             throw 'Invalid time range'
 
-        if (dates.length == 1 && time.stop < time.start)
+        if (dates.length == 1 && times.stop < times.start)
             dates.push(dates[0] + time.convert('24'))
 
         dates.forEach((n, i, a) => {
-            const start = (i == 0) ? time.start : 0,
-                  stop = (i == a.length - 1) ? time.stop : time.convert('24')
+            const start = (i == 0) ? times.start : 0,
+                  stop = (i == a.length - 1) ? times.stop : time.convert('24')
 
             log.add(n, {
                 start,
@@ -99,7 +99,7 @@ module.exports = function(log, config) {
         return log
     }
 
-    function queue({ time: mark, tail = [], tags }) {
+    function queue({ times: mark, tail = [], tags }) {
         if (typeof mark == 'object')
             throw 'Cannot queue time range'
 
